@@ -1,0 +1,3442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Torneo Interno de Socios • Club Atlético Temperley</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F1F5F9;
+      color: #0F172A;
+    }
+    .font-sport {
+      font-family: 'Oswald', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    @keyframes pulseLive {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.18); }
+    }
+    .live-dot {
+      animation: pulseLive 1.4s infinite ease-in-out;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .crop-grid {
+      background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#009EE3] selection:text-white">
+
+  <!-- ===================================================================== -->
+  <!-- ENCABEZADO INSTITUCIONAL (IDENTIDAD CELESTE Y BLANCA - TEMPERLEY)     -->
+  <!-- ===================================================================== -->
+  <header class="bg-[#0F172A] text-white border-b-4 border-[#009EE3] sticky top-0 z-30 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <!-- Disparador oculto: 5 toques/clics seguidos abre el panel de planillero -->
+          <button
+            id="header-crest-btn"
+            type="button"
+            onclick="handleSecretTriggerTap()"
+            title="Club Atlético Temperley"
+            class="shrink-0 focus:outline-none active:scale-95 transition-transform rounded-xl flex items-center justify-center"
+          >
+            <!-- Se renderiza dinámicamente con el tamaño configurado -->
+          </button>
+
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-[#009EE3] text-white">
+                Club Atlético Temperley
+              </span>
+              <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-white/10 text-sky-200">
+                Fútbol 11 • 15 Equipos
+              </span>
+            </div>
+            <h1 class="font-sport text-xl sm:text-3xl font-bold uppercase tracking-tight text-white truncate mt-0.5">
+              Torneo Interno de Socios
+            </h1>
+            <p class="text-xs text-slate-300 truncate">
+              5 Zonas de 3 • Clasifican los 5 Primeros y los 3 Mejores Segundos
+            </p>
+          </div>
+        </div>
+
+        <div id="live-header-badge" class="hidden shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full bg-red-400 live-dot"></span>
+          <span>EN VIVO</span>
+        </div>
+      </div>
+
+      <!-- Navegación Principal (Solo vistas públicas; Admin aparece únicamente al autenticarse) -->
+      <nav id="main-nav" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 md:pb-0"></nav>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTENIDO PRINCIPAL DINÁMICO                                          -->
+  <!-- ===================================================================== -->
+  <main id="app-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6"></main>
+
+  <!-- ===================================================================== -->
+  <!-- PIE DE PÁGINA                                                         -->
+  <!-- ===================================================================== -->
+  <footer class="bg-[#0F172A] text-slate-400 border-t border-slate-800 mt-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div id="footer-crest-wrap" class="w-7 h-7 shrink-0"></div>
+        <span><strong class="text-white">Club Atlético Temperley</strong> • Torneo Interno de Socios Fútbol 11</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span>5 Zonas de 3 • 5 Primeros + 3 Mejores Segundos</span>
+        <button
+          type="button"
+          onclick="openAdminPinModal()"
+          aria-label="Acceso Planilleros"
+          title="Acceso Planilleros"
+          class="p-2 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODALES Y NOTIFICACIONES (SIN ALERT / CONFIRM NATIVOS)                -->
+  <!-- ===================================================================== -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+  <div id="modal-root" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 overflow-y-auto"></div>
+
+  <input type="file" id="import-json-input" accept=".json,application/json" class="hidden" onchange="handleImportJsonFile(event)" />
+
+  <!-- ===================================================================== -->
+  <!-- LÓGICA DE LA APLICACIÓN                                               -->
+  <!-- ===================================================================== -->
+  <script>
+    const STORAGE_KEY = 'cat_torneo_socios_v4';
+    const ADMIN_PIN = '1912';
+    const TOURNAMENT_GROUPS = ['A', 'B', 'C', 'D', 'E'];
+
+    // -------------------------------------------------------------------
+    // 1. DATOS INICIALES DEL TORNEO (15 EQUIPOS EN 5 GRUPOS DE 3 + FIXTURE LIMPIO)
+    // -------------------------------------------------------------------
+    function createInitialData() {
+      const teams = [
+        // GRUPO A (3 equipos)
+        {
+          id: 't1', group: 'A', name: 'La Banda del Beranger', code: 'LBB',
+          primaryColor: '#009EE3', secondaryColor: '#FFFFFF', crestShape: 'classic', customCrestUrl: null,
+          players: [
+            { id: 'p1_1', name: 'Martín Fernández', photoUrl: null },
+            { id: 'p1_2', name: 'Lucas Gómez', photoUrl: null },
+            { id: 'p1_3', name: 'Nicolás Pereyra', photoUrl: null },
+            { id: 'p1_4', name: 'Facundo Sosa', photoUrl: null },
+            { id: 'p1_5', name: 'Matías Rojas', photoUrl: null },
+            { id: 'p1_6', name: 'Sebastián Díaz', photoUrl: null },
+            { id: 'p1_7', name: 'Juan Ignacio Ruiz', photoUrl: null },
+            { id: 'p1_8', name: 'Gonzalo Castro', photoUrl: null },
+            { id: 'p1_9', name: 'Ezequiel Acosta', photoUrl: null },
+            { id: 'p1_10', name: 'Diego Benítez', photoUrl: null },
+            { id: 'p1_11', name: 'Pablo Herrera', photoUrl: null },
+            { id: 'p1_12', name: 'Tomás Medina', photoUrl: null }
+          ]
+        },
+        {
+          id: 't2', group: 'A', name: 'Gasoleros del Sur', code: 'GDS',
+          primaryColor: '#0F172A', secondaryColor: '#009EE3', crestShape: 'swiss', customCrestUrl: null,
+          players: [
+            { id: 'p2_1', name: 'Rodrigo Silva', photoUrl: null },
+            { id: 'p2_2', name: 'Agustín Romero', photoUrl: null },
+            { id: 'p2_3', name: 'Maximiliano Torres', photoUrl: null },
+            { id: 'p2_4', name: 'Cristian Álvarez', photoUrl: null },
+            { id: 'p2_5', name: 'Leandro Suárez', photoUrl: null },
+            { id: 'p2_6', name: 'Federico Morales', photoUrl: null },
+            { id: 'p2_7', name: 'Ignacio Ortiz', photoUrl: null },
+            { id: 'p2_8', name: 'Ramiro Méndez', photoUrl: null },
+            { id: 'p2_9', name: 'Franco Giménez', photoUrl: null },
+            { id: 'p2_10', name: 'Hernán Quiroga', photoUrl: null },
+            { id: 'p2_11', name: 'Julián Cabrera', photoUrl: null },
+            { id: 'p2_12', name: 'Esteban Navarro', photoUrl: null }
+          ]
+        },
+        {
+          id: 't3', group: 'A', name: 'Turdera Celeste FC', code: 'TUR',
+          primaryColor: '#0284C7', secondaryColor: '#E0F2FE', crestShape: 'modern', customCrestUrl: null,
+          players: [
+            { id: 'p3_1', name: 'Carlos Domínguez', photoUrl: null },
+            { id: 'p3_2', name: 'Mariano Vega', photoUrl: null },
+            { id: 'p3_3', name: 'Santiago Molina', photoUrl: null },
+            { id: 'p3_4', name: 'Emiliano Paz', photoUrl: null },
+            { id: 'p3_5', name: 'Nahuel Ferreyra', photoUrl: null },
+            { id: 'p3_6', name: 'Gastón Roldán', photoUrl: null },
+            { id: 'p3_7', name: 'Brian Cáceres', photoUrl: null },
+            { id: 'p3_8', name: 'Kevin Villalba', photoUrl: null },
+            { id: 'p3_9', name: 'Alejo Ibarra', photoUrl: null },
+            { id: 'p3_10', name: 'Lautaro Ponce', photoUrl: null },
+            { id: 'p3_11', name: 'Damián Núñez', photoUrl: null },
+            { id: 'p3_12', name: 'Marcos Ledesma', photoUrl: null }
+          ]
+        },
+
+        // GRUPO B (3 equipos)
+        {
+          id: 't4', group: 'B', name: 'Los de 9 de Julio', code: '9DJ',
+          primaryColor: '#1E293B', secondaryColor: '#FFFFFF', crestShape: 'pointed', customCrestUrl: null,
+          players: [
+            { id: 'p4_1', name: 'Gustavo Ramos', photoUrl: null },
+            { id: 'p4_2', name: 'Patricio Figueroa', photoUrl: null },
+            { id: 'p4_3', name: 'Walter Peralta', photoUrl: null },
+            { id: 'p4_4', name: 'Claudio Bustos', photoUrl: null },
+            { id: 'p4_5', name: 'Sergio Godoy', photoUrl: null },
+            { id: 'p4_6', name: 'Oscar Maldonado', photoUrl: null },
+            { id: 'p4_7', name: 'Daniel Coria', photoUrl: null },
+            { id: 'p4_8', name: 'Javier Blanco', photoUrl: null },
+            { id: 'p4_9', name: 'Andrés Salgado', photoUrl: null },
+            { id: 'p4_10', name: 'Gabriel Vera', photoUrl: null },
+            { id: 'p4_11', name: 'César Aguirre', photoUrl: null },
+            { id: 'p4_12', name: 'Raúl Escobar', photoUrl: null }
+          ]
+        },
+        {
+          id: 't5', group: 'B', name: 'Filial Villa Galicia', code: 'FVG',
+          primaryColor: '#009EE3', secondaryColor: '#0F172A', crestShape: 'classic', customCrestUrl: null,
+          players: [
+            { id: 'p5_1', name: 'Matías Del Río', photoUrl: null },
+            { id: 'p5_2', name: 'Joaquín Cardozo', photoUrl: null },
+            { id: 'p5_3', name: 'Luciano Franco', photoUrl: null },
+            { id: 'p5_4', name: 'Bruno Paredes', photoUrl: null },
+            { id: 'p5_5', name: 'Alan Miranda', photoUrl: null },
+            { id: 'p5_6', name: 'Iván Juárez', photoUrl: null },
+            { id: 'p5_7', name: 'Enzo Carrizo', photoUrl: null },
+            { id: 'p5_8', name: 'Tobías Ayala', photoUrl: null },
+            { id: 'p5_9', name: 'Bautista Luna', photoUrl: null },
+            { id: 'p5_10', name: 'Valentín Bravo', photoUrl: null },
+            { id: 'p5_11', name: 'Mateo Barrientos', photoUrl: null },
+            { id: 'p5_12', name: 'Thiago Gallardo', photoUrl: null }
+          ]
+        },
+        {
+          id: 't6', group: 'B', name: 'San José Gasolero', code: 'SJG',
+          primaryColor: '#0369A1', secondaryColor: '#FFFFFF', crestShape: 'swiss', customCrestUrl: null,
+          players: [
+            { id: 'p6_1', name: 'Héctor Soria', photoUrl: null },
+            { id: 'p6_2', name: 'Néstor Palavecino', photoUrl: null },
+            { id: 'p6_3', name: 'Ariel Ocampo', photoUrl: null },
+            { id: 'p6_4', name: 'Darío Toledo', photoUrl: null },
+            { id: 'p6_5', name: 'Fabio Cáceres', photoUrl: null },
+            { id: 'p6_6', name: 'Leonardo Barrios', photoUrl: null },
+            { id: 'p6_7', name: 'Marcelo Quiroz', photoUrl: null },
+            { id: 'p6_8', name: 'Ricardo Alarcón', photoUrl: null },
+            { id: 'p6_9', name: 'Jorge Guzmán', photoUrl: null },
+            { id: 'p6_10', name: 'Eduardo Mansilla', photoUrl: null },
+            { id: 'p6_11', name: 'Alberto Vallejos', photoUrl: null },
+            { id: 'p6_12', name: 'Rubén Campos', photoUrl: null }
+          ]
+        },
+
+        // GRUPO C (3 equipos)
+        {
+          id: 't7', group: 'C', name: '1912 Fundadores', code: '1912',
+          primaryColor: '#0F172A', secondaryColor: '#38BDF8', crestShape: 'modern', customCrestUrl: null,
+          players: [
+            { id: 'p7_1', name: 'Germán Tapia', photoUrl: null },
+            { id: 'p7_2', name: 'Emanuel Lucero', photoUrl: null },
+            { id: 'p7_3', name: 'Jonathan Ríos', photoUrl: null },
+            { id: 'p7_4', name: 'Cristian Zeballos', photoUrl: null },
+            { id: 'p7_5', name: 'Guillermo Vargas', photoUrl: null },
+            { id: 'p7_6', name: 'Adrián Córdoba', photoUrl: null },
+            { id: 'p7_7', name: 'Mauro Brizuela', photoUrl: null },
+            { id: 'p7_8', name: 'Víctor Salvatierra', photoUrl: null },
+            { id: 'p7_9', name: 'Fernando Galván', photoUrl: null },
+            { id: 'p7_10', name: 'Hugo Maidana', photoUrl: null },
+            { id: 'p7_11', name: 'Luis Reynoso', photoUrl: null },
+            { id: 'p7_12', name: 'Roberto Funes', photoUrl: null }
+          ]
+        },
+        {
+          id: 't8', group: 'C', name: 'Deportivo Pasco', code: 'PAS',
+          primaryColor: '#0EA5E9', secondaryColor: '#FFFFFF', crestShape: 'pointed', customCrestUrl: null,
+          players: [
+            { id: 'p8_1', name: 'Alexis Lescano', photoUrl: null },
+            { id: 'p8_2', name: 'Ulises Santillán', photoUrl: null },
+            { id: 'p8_3', name: 'Camilo Segovia', photoUrl: null },
+            { id: 'p8_4', name: 'Renzo Duarte', photoUrl: null },
+            { id: 'p8_5', name: 'Elías Montenegro', photoUrl: null },
+            { id: 'p8_6', name: 'Simón Pacheco', photoUrl: null },
+            { id: 'p8_7', name: 'Rafael Ávila', photoUrl: null },
+            { id: 'p8_8', name: 'Jeremías Zárate', photoUrl: null },
+            { id: 'p8_9', name: 'Axel Coronel', photoUrl: null },
+            { id: 'p8_10', name: 'Dylan Espinoza', photoUrl: null },
+            { id: 'p8_11', name: 'Santino Nieva', photoUrl: null },
+            { id: 'p8_12', name: 'Benjamín Aranda', photoUrl: null }
+          ]
+        },
+        {
+          id: 't9', group: 'C', name: 'La Guardia Celeste', code: 'LGC',
+          primaryColor: '#009EE3', secondaryColor: '#FFFFFF', crestShape: 'swiss', customCrestUrl: null,
+          players: [
+            { id: 'p9_1', name: 'Juan Cruz Marini', photoUrl: null },
+            { id: 'p9_2', name: 'Francisco Rosales', photoUrl: null },
+            { id: 'p9_3', name: 'Pedro Ojeda', photoUrl: null },
+            { id: 'p9_4', name: 'Manuel Velázquez', photoUrl: null },
+            { id: 'p9_5', name: 'Nicolás Bustamante', photoUrl: null },
+            { id: 'p9_6', name: 'Lucas Heredia', photoUrl: null },
+            { id: 'p9_7', name: 'Marcos Britos', photoUrl: null },
+            { id: 'p9_8', name: 'Diego Luján', photoUrl: null },
+            { id: 'p9_9', name: 'Gonzalo Chamorro', photoUrl: null },
+            { id: 'p9_10', name: 'Sebastián Monzón', photoUrl: null },
+            { id: 'p9_11', name: 'Martín Cejas', photoUrl: null },
+            { id: 'p9_12', name: 'Facundo Ibáñez', photoUrl: null }
+          ]
+        },
+
+        // GRUPO D (3 equipos)
+        {
+          id: 't10', group: 'D', name: 'Peña Lomas Norte', code: 'PLN',
+          primaryColor: '#1E293B', secondaryColor: '#009EE3', crestShape: 'classic', customCrestUrl: null,
+          players: [
+            { id: 'p10_1', name: 'Gabriel Pizarro', photoUrl: null },
+            { id: 'p10_2', name: 'Oscar Tevez', photoUrl: null },
+            { id: 'p10_3', name: 'Daniel Verón', photoUrl: null },
+            { id: 'p10_4', name: 'Javier Solís', photoUrl: null },
+            { id: 'p10_5', name: 'Sergio Agüero', photoUrl: null },
+            { id: 'p10_6', name: 'Claudio Garrido', photoUrl: null },
+            { id: 'p10_7', name: 'Walter Moya', photoUrl: null },
+            { id: 'p10_8', name: 'Gustavo Oliva', photoUrl: null },
+            { id: 'p10_9', name: 'Patricio Cuevas', photoUrl: null },
+            { id: 'p10_10', name: 'Andrés Saavedra', photoUrl: null },
+            { id: 'p10_11', name: 'César Riquelme', photoUrl: null },
+            { id: 'p10_12', name: 'Raúl Albornoz', photoUrl: null }
+          ]
+        },
+        {
+          id: 't11', group: 'D', name: 'Ateneo Gasolero', code: 'ATG',
+          primaryColor: '#0284C7', secondaryColor: '#FFFFFF', crestShape: 'pointed', customCrestUrl: null,
+          players: [
+            { id: 'p11_1', name: 'Tomás Bellini', photoUrl: null },
+            { id: 'p11_2', name: 'Agustín Ferreiro', photoUrl: null },
+            { id: 'p11_3', name: 'Ramiro Lemos', photoUrl: null },
+            { id: 'p11_4', name: 'Ignacio Varela', photoUrl: null },
+            { id: 'p11_5', name: 'Federico Calvo', photoUrl: null },
+            { id: 'p11_6', name: 'Leandro Prado', photoUrl: null },
+            { id: 'p11_7', name: 'Hernán Quintana', photoUrl: null },
+            { id: 'p11_8', name: 'Franco Serrano', photoUrl: null },
+            { id: 'p11_9', name: 'Julián Maciel', photoUrl: null },
+            { id: 'p11_10', name: 'Esteban Zamora', photoUrl: null },
+            { id: 'p11_11', name: 'Rodrigo Salto', photoUrl: null },
+            { id: 'p11_12', name: 'Maximiliano Yáñez', photoUrl: null }
+          ]
+        },
+        {
+          id: 't12', group: 'D', name: 'Social Dorrego', code: 'DOR',
+          primaryColor: '#0F172A', secondaryColor: '#FFFFFF', crestShape: 'modern', customCrestUrl: null,
+          players: [
+            { id: 'p12_1', name: 'Alejo Argañaraz', photoUrl: null },
+            { id: 'p12_2', name: 'Kevin Lazarte', photoUrl: null },
+            { id: 'p12_3', name: 'Brian Quiñónez', photoUrl: null },
+            { id: 'p12_4', name: 'Gastón Robles', photoUrl: null },
+            { id: 'p12_5', name: 'Nahuel Valle', photoUrl: null },
+            { id: 'p12_6', name: 'Emiliano Cárdenas', photoUrl: null },
+            { id: 'p12_7', name: 'Santiago Mendieta', photoUrl: null },
+            { id: 'p12_8', name: 'Mariano Cisneros', photoUrl: null },
+            { id: 'p12_9', name: 'Carlos Villagra', photoUrl: null },
+            { id: 'p12_10', name: 'Lautaro Sosa', photoUrl: null },
+            { id: 'p12_11', name: 'Damián Farías', photoUrl: null },
+            { id: 'p12_12', name: 'Marcos Bazán', photoUrl: null }
+          ]
+        },
+
+        // GRUPO E (3 equipos)
+        {
+          id: 't13', group: 'E', name: 'Mística Celeste', code: 'MIS',
+          primaryColor: '#009EE3', secondaryColor: '#0F172A', crestShape: 'modern', customCrestUrl: null,
+          players: [
+            { id: 'p13_1', name: 'Joaquín Bustos', photoUrl: null },
+            { id: 'p13_2', name: 'Luciano Chávez', photoUrl: null },
+            { id: 'p13_3', name: 'Bruno Moyano', photoUrl: null },
+            { id: 'p13_4', name: 'Alan Figueroa', photoUrl: null },
+            { id: 'p13_5', name: 'Iván Godoy', photoUrl: null },
+            { id: 'p13_6', name: 'Enzo Coronel', photoUrl: null },
+            { id: 'p13_7', name: 'Tobías Peralta', photoUrl: null },
+            { id: 'p13_8', name: 'Bautista Roldán', photoUrl: null },
+            { id: 'p13_9', name: 'Valentín Aguirre', photoUrl: null },
+            { id: 'p13_10', name: 'Mateo Vera', photoUrl: null },
+            { id: 'p13_11', name: 'Thiago Blanco', photoUrl: null },
+            { id: 'p13_12', name: 'Matías Coria', photoUrl: null }
+          ]
+        },
+        {
+          id: 't14', group: 'E', name: 'La Gloriosa Sur', code: 'LGS',
+          primaryColor: '#0369A1', secondaryColor: '#E0F2FE', crestShape: 'classic', customCrestUrl: null,
+          players: [
+            { id: 'p14_1', name: 'Darío Giménez', photoUrl: null },
+            { id: 'p14_2', name: 'Ariel Cabrera', photoUrl: null },
+            { id: 'p14_3', name: 'Néstor Navarro', photoUrl: null },
+            { id: 'p14_4', name: 'Héctor Molina', photoUrl: null },
+            { id: 'p14_5', name: 'Fabio Paz', photoUrl: null },
+            { id: 'p14_6', name: 'Leonardo Ibarra', photoUrl: null },
+            { id: 'p14_7', name: 'Marcelo Ponce', photoUrl: null },
+            { id: 'p14_8', name: 'Ricardo Núñez', photoUrl: null },
+            { id: 'p14_9', name: 'Jorge Ledesma', photoUrl: null },
+            { id: 'p14_10', name: 'Eduardo Ramos', photoUrl: null },
+            { id: 'p14_11', name: 'Alberto Escobar', photoUrl: null },
+            { id: 'p14_12', name: 'Rubén Salgado', photoUrl: null }
+          ]
+        },
+        {
+          id: 't15', group: 'E', name: 'Veteranos del Club', code: 'VET',
+          primaryColor: '#0F172A', secondaryColor: '#009EE3', crestShape: 'swiss', customCrestUrl: null,
+          players: [
+            { id: 'p15_1', name: 'Guillermo Franco', photoUrl: null },
+            { id: 'p15_2', name: 'Adrián Paredes', photoUrl: null },
+            { id: 'p15_3', name: 'Mauro Miranda', photoUrl: null },
+            { id: 'p15_4', name: 'Víctor Juárez', photoUrl: null },
+            { id: 'p15_5', name: 'Fernando Carrizo', photoUrl: null },
+            { id: 'p15_6', name: 'Hugo Ayala', photoUrl: null },
+            { id: 'p15_7', name: 'Luis Luna', photoUrl: null },
+            { id: 'p15_8', name: 'Roberto Bravo', photoUrl: null },
+            { id: 'p15_9', name: 'Germán Barrientos', photoUrl: null },
+            { id: 'p15_10', name: 'Emanuel Gallardo', photoUrl: null },
+            { id: 'p15_11', name: 'Jonathan Soria', photoUrl: null },
+            { id: 'p15_12', name: 'Cristian Ocampo', photoUrl: null }
+          ]
+        }
+      ];
+
+      // Fixture de Fase de Grupos en limpio (se carga manualmente desde Admin -> Armar Fixture)
+      // Se mantienen solo los 7 cruces estructurales de Fase Final (Domingo)
+      const matches = [
+        { id: 'qf1', stage: 'QF', label: 'Cuartos 1', seedHome: '1° Grupo A', seedAway: '3° Mejor Segundo', day: 'Domingo', time: '10:00', pitch: 'Cancha 1', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+        { id: 'qf2', stage: 'QF', label: 'Cuartos 2', seedHome: '1° Grupo B', seedAway: '2° Mejor Segundo', day: 'Domingo', time: '10:00', pitch: 'Cancha 2', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+        { id: 'qf3', stage: 'QF', label: 'Cuartos 3', seedHome: '1° Grupo C', seedAway: '1° Mejor Segundo', day: 'Domingo', time: '11:30', pitch: 'Cancha 1', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+        { id: 'qf4', stage: 'QF', label: 'Cuartos 4', seedHome: '1° Grupo D', seedAway: '1° Grupo E', day: 'Domingo', time: '11:30', pitch: 'Cancha 2', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+
+        { id: 'sf1', stage: 'SF', label: 'Semifinal 1', seedHome: 'Ganador Cuartos 1', seedAway: 'Ganador Cuartos 3', day: 'Domingo', time: '15:00', pitch: 'Estadio Beranger', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+        { id: 'sf2', stage: 'SF', label: 'Semifinal 2', seedHome: 'Ganador Cuartos 2', seedAway: 'Ganador Cuartos 4', day: 'Domingo', time: '16:30', pitch: 'Estadio Beranger', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] },
+
+        { id: 'final', stage: 'FINAL', label: 'Gran Final', seedHome: 'Ganador Semifinal 1', seedAway: 'Ganador Semifinal 2', day: 'Domingo', time: '19:00', pitch: 'Estadio Beranger', homeId: null, awayId: null, homeGoals: null, awayGoals: null, homePen: null, awayPen: null, status: 'SCHEDULED', goalEvents: [] }
+      ];
+
+      return {
+        teams,
+        matches,
+        customHeaderCrestUrl: null,
+        imageSettings: {
+          headerCrestSize: 58,
+          teamCrestScale: 100,
+          playerPhotoScale: 100
+        }
+      };
+    }
+
+    // -------------------------------------------------------------------
+    // 2. ESTADO GLOBAL Y PERSISTENCIA
+    // -------------------------------------------------------------------
+    let tournamentData = loadTournamentData();
+
+    let uiState = {
+      activeTab: 'posiciones',
+      fixtureDay: 'ALL',
+      fixtureGroup: 'ALL',
+      fixtureSearch: '',
+      scorerTeam: 'ALL',
+      scorerSearch: '',
+      adminUnlocked: false,
+      adminSubTab: 'fixture',
+      adminMatchFilter: 'ALL',
+      adminSelectedTeamId: 't1',
+      pendingNewPlayerPhoto: null,
+      goalModalMatchId: null,
+      goalModalSide: null,
+      // Estado del constructor manual de fixture
+      newMatchGroup: 'A',
+      newMatchHomeId: 't1',
+      newMatchAwayId: 't2',
+      newMatchDay: 'Sábado',
+      newMatchTime: '09:00',
+      newMatchPitch: 'Cancha 1',
+      adminFixtureFilterGroup: 'ALL'
+    };
+
+    let cropState = {
+      active: false,
+      targetType: null,
+      targetId: null,
+      title: '',
+      rawImageSrc: null,
+      imgElement: null,
+      zoom: 1,
+      offsetX: 0,
+      offsetY: 0,
+      outputSize: 256,
+      bgMode: 'transparent',
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      pinchStartDist: null,
+      pinchStartZoom: 1
+    };
+
+    function loadTournamentData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return createInitialData();
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.teams) || !Array.isArray(parsed.matches)) {
+          return createInitialData();
+        }
+        if (typeof parsed.customHeaderCrestUrl === 'undefined') {
+          parsed.customHeaderCrestUrl = null;
+        }
+        if (!parsed.imageSettings) {
+          parsed.imageSettings = { headerCrestSize: 58, teamCrestScale: 100, playerPhotoScale: 100 };
+        }
+        return parsed;
+      } catch (e) {
+        return createInitialData();
+      }
+    }
+
+    function saveTournamentData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tournamentData));
+      } catch (e) {
+        showToast('Almacenamiento lleno. Reducí el tamaño de las imágenes o exportá un respaldo JSON.', 'error');
+      }
+    }
+
+    // -------------------------------------------------------------------
+    // 3. UTILIDADES Y COMPONENTES VISUALES
+    // -------------------------------------------------------------------
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getTeamById(teamId) {
+      if (!teamId) return null;
+      return tournamentData.teams.find(t => t.id === teamId) || null;
+    }
+
+    function getPlayerById(teamId, playerId) {
+      const t = getTeamById(teamId);
+      if (!t || !playerId) return null;
+      return t.players.find(p => p.id === playerId) || null;
+    }
+
+    function getImageSettings() {
+      if (!tournamentData.imageSettings) {
+        tournamentData.imageSettings = { headerCrestSize: 58, teamCrestScale: 100, playerPhotoScale: 100 };
+      }
+      return tournamentData.imageSettings;
+    }
+
+    function renderTemperleyCrestSVG(className = 'w-full h-full') {
+      return `
+        <svg viewBox="0 0 220 260" class="${className}" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Escudo Club Atlético Temperley">
+          <defs>
+            <clipPath id="cat-crest-clip">
+              <path d="M 35 16 Q 110 38 185 16 L 204 34 L 204 74 C 182 95 182 145 178 182 C 173 218 145 239 110 250 C 75 239 47 218 42 182 C 38 145 38 95 16 74 L 16 34 Z" />
+            </clipPath>
+          </defs>
+          <path d="M 32 10 Q 110 33 188 10 L 210 31 L 210 77 C 188 97 188 146 184 184 C 179 222 149 245 110 256 C 71 245 41 222 36 184 C 32 146 32 97 10 77 L 10 31 Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="3.5" stroke-linejoin="round" />
+          <g clip-path="url(#cat-crest-clip)">
+            <rect x="0" y="0" width="220" height="260" fill="#FFFFFF" />
+            <polygon points="168,0 220,0 220,46 44,226 12,188 12,148" fill="#19B5EB" />
+            <text x="68" y="88" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="47" fill="#19B5EB" text-anchor="middle">C</text>
+            <text x="110" y="148" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="47" fill="#FFFFFF" text-anchor="middle">A</text>
+            <text x="155" y="207" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="47" fill="#19B5EB" text-anchor="middle">T</text>
+          </g>
+          <path d="M 35 16 Q 110 38 185 16 L 204 34 L 204 74 C 182 95 182 145 178 182 C 173 218 145 239 110 250 C 75 239 47 218 42 182 C 38 145 38 95 16 74 L 16 34 Z" stroke="#19B5EB" stroke-width="4.5" stroke-linejoin="round" />
+        </svg>
+      `;
+    }
+
+    function renderMainHeaderCrest() {
+      const size = getImageSettings().headerCrestSize || 58;
+      if (tournamentData.customHeaderCrestUrl) {
+        return `<img src="${tournamentData.customHeaderCrestUrl}" alt="Escudo Principal" style="width:${size}px;height:${size}px;" class="object-contain rounded-xl bg-white/10 p-0.5 shadow-md" />`;
+      }
+      return `<div style="width:${size}px;height:${size}px;" class="flex items-center justify-center">${renderTemperleyCrestSVG('w-full h-full drop-shadow')}</div>`;
+    }
+
+    function renderDefaultCrestSVG(team, size) {
+      const p = team?.primaryColor || '#009EE3';
+      const s = team?.secondaryColor || '#FFFFFF';
+      const code = escapeHtml((team?.code || 'CAT').slice(0, 4));
+      const shape = team?.crestShape || 'classic';
+      const pattern = team?.crestPattern || 'diagonal';
+      const clipId = `clip_${team?.id || 'def'}_${Math.random().toString(36).slice(2, 7)}`;
+
+      let pathD = 'M 14 10 L 86 10 L 86 50 C 86 74 50 92 50 92 C 50 92 14 74 14 50 Z';
+      if (shape === 'swiss') {
+        pathD = 'M 16 12 Q 50 20 84 12 L 88 26 C 80 42 82 68 50 92 C 18 68 20 42 12 26 Z';
+      } else if (shape === 'pointed') {
+        pathD = 'M 15 10 L 85 10 L 85 56 L 50 92 L 15 56 Z';
+      } else if (shape === 'modern') {
+        pathD = 'M 18 10 L 82 10 Q 86 10 86 14 L 86 52 C 86 73 50 91 50 91 C 50 91 14 73 14 52 L 14 14 Q 14 10 18 10 Z';
+      } else if (shape === 'circle') {
+        pathD = 'M 50 8 A 42 42 0 1 0 50 92 A 42 42 0 1 0 50 8 Z';
+      }
+
+      let patternSvg = `<polygon points="75,0 100,0 100,25 25,100 0,100 0,75" fill="${s}" opacity="0.85" />`;
+      if (pattern === 'vertical') {
+        patternSvg = `<rect x="20" y="0" width="16" height="100" fill="${s}" opacity="0.85" /><rect x="64" y="0" width="16" height="100" fill="${s}" opacity="0.85" />`;
+      } else if (pattern === 'horizontal') {
+        patternSvg = `<rect x="0" y="22" width="100" height="56" fill="${s}" opacity="0.85" />`;
+      } else if (pattern === 'half') {
+        patternSvg = `<rect x="50" y="0" width="50" height="100" fill="${s}" opacity="0.85" />`;
+      } else if (pattern === 'solid') {
+        patternSvg = '';
+      }
+
+      return `
+        <svg width="${size}" height="${size}" viewBox="0 0 100 100" class="shrink-0 drop-shadow-2xs" aria-hidden="true">
+          <defs>
+            <clipPath id="${clipId}">
+              <path d="${pathD}" />
+            </clipPath>
+          </defs>
+          <g clip-path="url(#${clipId})">
+            <rect x="0" y="0" width="100" height="100" fill="${p}" />
+            ${patternSvg}
+            <rect x="0" y="36" width="100" height="28" fill="#0F172A" opacity="0.78" />
+            <text x="50" y="55" font-family="Oswald, sans-serif" font-weight="700" font-size="18" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">${code}</text>
+          </g>
+          <path d="${pathD}" fill="none" stroke="#CBD5E1" stroke-width="3.5" />
+        </svg>
+      `;
+    }
+
+    function renderTeamCrest(team, baseSize = 32) {
+      const scale = (getImageSettings().teamCrestScale || 100) / 100;
+      const finalSize = Math.round(baseSize * scale);
+
+      if (!team) {
+        return `
+          <div style="width:${finalSize}px;height:${finalSize}px;" class="rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center shrink-0 font-bold text-xs">
+            ?
+          </div>
+        `;
+      }
+
+      if (team.customCrestUrl) {
+        return `
+          <img
+            src="${team.customCrestUrl}"
+            alt="Escudo ${escapeHtml(team.name)}"
+            style="width:${finalSize}px;height:${finalSize}px;"
+            class="object-contain rounded-xl bg-white border border-slate-200 p-0.5 shrink-0 shadow-2xs"
+          />
+        `;
+      }
+
+      return renderDefaultCrestSVG(team, finalSize);
+    }
+
+    function renderPlayerAvatar(player, baseSize = 36) {
+      const scale = (getImageSettings().playerPhotoScale || 100) / 100;
+      const finalSize = Math.round(baseSize * scale);
+
+      if (player && player.photoUrl) {
+        return `
+          <img
+            src="${player.photoUrl}"
+            alt="${escapeHtml(player.name)}"
+            style="width:${finalSize}px;height:${finalSize}px;"
+            class="rounded-full object-cover border-2 border-[#009EE3]/40 bg-slate-100 shrink-0 shadow-2xs"
+          />
+        `;
+      }
+
+      return `
+        <div style="width:${finalSize}px;height:${finalSize}px;" class="rounded-full bg-slate-200 text-slate-500 border border-slate-300 flex items-center justify-center shrink-0 overflow-hidden" aria-hidden="true">
+          <svg viewBox="0 0 24 24" class="w-[72%] h-[72%] mt-1" fill="currentColor">
+            <circle cx="12" cy="8" r="4.2" />
+            <path d="M4.5 20.5c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7" />
+          </svg>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------
+    // 4. LÓGICA DE POSICIONES (5 GRUPOS DE 3 + MEJORES SEGUNDOS + CRUCES)
+    // -------------------------------------------------------------------
+    function computeGroupStandings(groupLetter) {
+      const groupTeams = tournamentData.teams.filter(t => t.group === groupLetter);
+      const statsMap = {};
+
+      groupTeams.forEach(t => {
+        statsMap[t.id] = {
+          team: t,
+          pj: 0,
+          pg: 0,
+          pe: 0,
+          pp: 0,
+          gf: 0,
+          gc: 0,
+          dif: 0,
+          pts: 0
+        };
+      });
+
+      const groupMatches = tournamentData.matches.filter(
+        m => m.stage === 'GROUP' && m.group === groupLetter && m.status === 'FINISHED' && m.homeGoals !== null && m.awayGoals !== null
+      );
+
+      groupMatches.forEach(m => {
+        const home = statsMap[m.homeId];
+        const away = statsMap[m.awayId];
+        if (!home || !away) return;
+
+        home.pj += 1;
+        away.pj += 1;
+        home.gf += m.homeGoals;
+        home.gc += m.awayGoals;
+        away.gf += m.awayGoals;
+        away.gc += m.homeGoals;
+
+        if (m.homeGoals > m.awayGoals) {
+          home.pg += 1;
+          home.pts += 3;
+          away.pp += 1;
+        } else if (m.homeGoals < m.awayGoals) {
+          away.pg += 1;
+          away.pts += 3;
+          home.pp += 1;
+        } else {
+          home.pe += 1;
+          away.pe += 1;
+          home.pts += 1;
+          away.pts += 1;
+        }
+      });
+
+      const list = Object.values(statsMap).map(s => ({
+        ...s,
+        dif: s.gf - s.gc
+      }));
+
+      // Desempate: 1) Puntos, 2) Dif Gol, 3) Goles a Favor, 4) Enfrentamiento directo
+      list.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.dif !== a.dif) return b.dif - a.dif;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+
+        const h2h = groupMatches.find(
+          m => (m.homeId === a.team.id && m.awayId === b.team.id) || (m.homeId === b.team.id && m.awayId === a.team.id)
+        );
+        if (h2h) {
+          const aGoals = h2h.homeId === a.team.id ? h2h.homeGoals : h2h.awayGoals;
+          const bGoals = h2h.homeId === b.team.id ? h2h.homeGoals : h2h.awayGoals;
+          if (bGoals !== aGoals) return bGoals - aGoals;
+        }
+        return a.team.name.localeCompare(b.team.name);
+      });
+
+      return list;
+    }
+
+    // Verifica si un grupo completó todos sus partidos (en un grupo de 3 equipos son 3 partidos finalizados)
+    function isGroupCompleted(groupLetter) {
+      const groupMatches = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === groupLetter);
+      return groupMatches.length >= 3 && groupMatches.every(m => m.status === 'FINISHED');
+    }
+
+    function isAllGroupsCompleted() {
+      return TOURNAMENT_GROUPS.every(g => isGroupCompleted(g));
+    }
+
+    // Tabla de Mejores Segundos (entre los 5 grupos A, B, C, D, E)
+    function computeBestSeconds() {
+      const seconds = [];
+      TOURNAMENT_GROUPS.forEach(g => {
+        const stand = computeGroupStandings(g);
+        if (stand[1]) {
+          seconds.push({
+            ...stand[1],
+            group: g,
+            groupCompleted: isGroupCompleted(g)
+          });
+        }
+      });
+
+      seconds.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.dif !== a.dif) return b.dif - a.dif;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        if (b.pg !== a.pg) return b.pg - a.pg;
+        return a.team.name.localeCompare(b.team.name);
+      });
+
+      return seconds;
+    }
+
+    function getMatchWinnerId(match) {
+      if (!match || match.status !== 'FINISHED' || match.homeGoals === null || match.awayGoals === null) return null;
+      if (match.homeGoals > match.awayGoals) return match.homeId;
+      if (match.awayGoals > match.homeGoals) return match.awayId;
+      if (match.homePen !== null && match.awayPen !== null) {
+        if (match.homePen > match.awayPen) return match.homeId;
+        if (match.awayPen > match.homePen) return match.awayId;
+      }
+      return null;
+    }
+
+    function syncKnockoutBracket() {
+      const standA = computeGroupStandings('A');
+      const standB = computeGroupStandings('B');
+      const standC = computeGroupStandings('C');
+      const standD = computeGroupStandings('D');
+      const standE = computeGroupStandings('E');
+      const bestSeconds = computeBestSeconds();
+      const allGroupsDone = isAllGroupsCompleted();
+
+      const qf1 = tournamentData.matches.find(m => m.id === 'qf1');
+      const qf2 = tournamentData.matches.find(m => m.id === 'qf2');
+      const qf3 = tournamentData.matches.find(m => m.id === 'qf3');
+      const qf4 = tournamentData.matches.find(m => m.id === 'qf4');
+
+      // Cada grupo solo define su clasificado cuando TODOS los partidos de ese grupo están finalizados
+      if (qf1) {
+        qf1.homeId = isGroupCompleted('A') ? (standA[0]?.team.id || null) : null;
+        qf1.awayId = allGroupsDone ? (bestSeconds[2]?.team.id || null) : null;
+      }
+      if (qf2) {
+        qf2.homeId = isGroupCompleted('B') ? (standB[0]?.team.id || null) : null;
+        qf2.awayId = allGroupsDone ? (bestSeconds[1]?.team.id || null) : null;
+      }
+      if (qf3) {
+        qf3.homeId = isGroupCompleted('C') ? (standC[0]?.team.id || null) : null;
+        qf3.awayId = allGroupsDone ? (bestSeconds[0]?.team.id || null) : null;
+      }
+      if (qf4) {
+        qf4.homeId = isGroupCompleted('D') ? (standD[0]?.team.id || null) : null;
+        qf4.awayId = isGroupCompleted('E') ? (standE[0]?.team.id || null) : null;
+      }
+
+      const sf1 = tournamentData.matches.find(m => m.id === 'sf1');
+      const sf2 = tournamentData.matches.find(m => m.id === 'sf2');
+      if (sf1) {
+        sf1.homeId = getMatchWinnerId(qf1);
+        sf1.awayId = getMatchWinnerId(qf3);
+      }
+      if (sf2) {
+        sf2.homeId = getMatchWinnerId(qf2);
+        sf2.awayId = getMatchWinnerId(qf4);
+      }
+
+      const fin = tournamentData.matches.find(m => m.id === 'final');
+      if (fin) {
+        fin.homeId = getMatchWinnerId(sf1);
+        fin.awayId = getMatchWinnerId(sf2);
+      }
+    }
+
+    function computeTopScorers() {
+      const scorerMap = {};
+      const teamPlayedMap = {};
+
+      tournamentData.teams.forEach(t => {
+        teamPlayedMap[t.id] = 0;
+        t.players.forEach(p => {
+          scorerMap[p.id] = {
+            player: p,
+            team: t,
+            goals: 0
+          };
+        });
+      });
+
+      tournamentData.matches.forEach(m => {
+        if ((m.status === 'FINISHED' || m.status === 'LIVE') && m.homeId && m.awayId) {
+          teamPlayedMap[m.homeId] = (teamPlayedMap[m.homeId] || 0) + 1;
+          teamPlayedMap[m.awayId] = (teamPlayedMap[m.awayId] || 0) + 1;
+        }
+        if (Array.isArray(m.goalEvents)) {
+          m.goalEvents.forEach(ev => {
+            if (ev.playerId && scorerMap[ev.playerId]) {
+              scorerMap[ev.playerId].goals += 1;
+            }
+          });
+        }
+      });
+
+      return Object.values(scorerMap)
+        .filter(item => item.goals > 0)
+        .map(item => {
+          const pj = teamPlayedMap[item.team.id] || 1;
+          return {
+            ...item,
+            pj,
+            avg: (item.goals / pj).toFixed(2)
+          };
+        })
+        .sort((a, b) => {
+          if (b.goals !== a.goals) return b.goals - a.goals;
+          return a.player.name.localeCompare(b.player.name);
+        });
+    }
+
+    // -------------------------------------------------------------------
+    // 5. ACCESO OCULTO AL PANEL DE PLANILLERO
+    // -------------------------------------------------------------------
+    let secretTapCount = 0;
+    let secretTapTimer = null;
+
+    function handleSecretTriggerTap() {
+      secretTapCount += 1;
+      clearTimeout(secretTapTimer);
+      if (secretTapCount >= 5) {
+        secretTapCount = 0;
+        if (uiState.adminUnlocked) {
+          uiState.activeTab = 'admin';
+          renderApp();
+        } else {
+          openAdminPinModal();
+        }
+        return;
+      }
+      secretTapTimer = setTimeout(() => {
+        secretTapCount = 0;
+      }, 1500);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') || (e.altKey && e.key.toLowerCase() === 'a')) {
+        e.preventDefault();
+        if (uiState.adminUnlocked) {
+          uiState.activeTab = 'admin';
+          renderApp();
+        } else {
+          openAdminPinModal();
+        }
+      }
+    });
+
+    function checkUrlAdminTrigger() {
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (hash === '#admin' || search.includes('admin=1') || search.includes('planillero')) {
+        setTimeout(() => openAdminPinModal(), 250);
+      }
+    }
+
+    function openAdminPinModal() {
+      const modalRoot = document.getElementById('modal-root');
+      modalRoot.classList.remove('hidden');
+      modalRoot.classList.add('flex');
+      modalRoot.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-[#0F172A] text-[#009EE3] flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Acceso Planillero</h3>
+              <p class="text-xs text-slate-500">Ingresá la clave de organización (PIN: 1912)</p>
+            </div>
+          </div>
+
+          <form onsubmit="submitAdminPin(event)" class="space-y-4">
+            <input
+              id="admin-pin-input"
+              type="password"
+              inputmode="numeric"
+              maxlength="8"
+              placeholder="••••"
+              autofocus
+              class="w-full px-4 py-3 text-center text-2xl font-extrabold tracking-[0.4em] rounded-xl border-2 border-slate-200 focus:border-[#009EE3] focus:outline-none"
+            />
+            <div class="flex items-center justify-end gap-2">
+              <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+                Cancelar
+              </button>
+              <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#009EE3] hover:bg-[#0077B6] text-white shadow-sm">
+                Ingresar
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+      setTimeout(() => document.getElementById('admin-pin-input')?.focus(), 50);
+    }
+
+    function submitAdminPin(e) {
+      e.preventDefault();
+      const input = document.getElementById('admin-pin-input');
+      if (!input) return;
+      if (input.value.trim() === ADMIN_PIN) {
+        uiState.adminUnlocked = true;
+        uiState.activeTab = 'admin';
+        closeModal();
+        showToast('Modo Planillero habilitado', 'success');
+        renderApp();
+      } else {
+        showToast('PIN incorrecto', 'error');
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    function logoutAdmin() {
+      uiState.adminUnlocked = false;
+      if (uiState.activeTab === 'admin') {
+        uiState.activeTab = 'posiciones';
+      }
+      showToast('Sesión de planillero cerrada y ocultada', 'info');
+      renderApp();
+    }
+
+    // -------------------------------------------------------------------
+    // 6. NOTIFICACIONES TOAST Y MODALES AUXILIARES
+    // -------------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white border-emerald-500',
+        error: 'bg-red-600 text-white border-red-500',
+        info: 'bg-[#0F172A] text-white border-[#009EE3]'
+      };
+      el.className = `${colors[type] || colors.info} border px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm font-semibold pointer-events-auto transition-all`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 250);
+      }, 3200);
+    }
+
+    function closeModal() {
+      const modalRoot = document.getElementById('modal-root');
+      modalRoot.classList.add('hidden');
+      modalRoot.classList.remove('flex');
+      modalRoot.innerHTML = '';
+      cropState.active = false;
+      cropState.isDragging = false;
+    }
+
+    function openConfirmModal(title, description, onConfirm) {
+      const modalRoot = document.getElementById('modal-root');
+      modalRoot.classList.remove('hidden');
+      modalRoot.classList.add('flex');
+      modalRoot.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <h3 class="font-sport text-xl font-bold uppercase text-slate-900">${escapeHtml(title)}</h3>
+          <p class="text-sm text-slate-600">${escapeHtml(description)}</p>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+              Cancelar
+            </button>
+            <button id="confirm-modal-ok" type="button" class="px-5 py-2 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-700 text-white">
+              Confirmar
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('confirm-modal-ok').onclick = () => {
+        closeModal();
+        onConfirm();
+      };
+    }
+
+    // -------------------------------------------------------------------
+    // 7. EDITOR INTERACTIVO DE RECORTE, ZOOM Y REAJUSTE DE IMÁGENES
+    // -------------------------------------------------------------------
+    function startImageUpload(event, targetType, targetId = null) {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        let title = 'Ajustar Imagen';
+        let defaultBg = 'transparent';
+        let defaultSize = 256;
+
+        if (targetType === 'headerCrest') {
+          title = 'Reajustar Escudo Principal del Header';
+          defaultBg = 'transparent';
+          defaultSize = 256;
+        } else if (targetType === 'teamCrest') {
+          const t = getTeamById(targetId);
+          title = `Reajustar Escudo • ${t ? t.name : 'Equipo'}`;
+          defaultBg = 'transparent';
+          defaultSize = 256;
+        } else if (targetType === 'playerPhoto' || targetType === 'newPlayerPhoto') {
+          title = 'Encuadrar Foto de Jugador';
+          defaultBg = '#ffffff';
+          defaultSize = 200;
+        }
+
+        openImageCropModal({
+          targetType,
+          targetId,
+          title,
+          rawImageSrc: dataUrl,
+          bgMode: defaultBg,
+          outputSize: defaultSize
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openImageCropModal({ targetType, targetId = null, title = 'Reajustar Imagen', rawImageSrc, bgMode = 'transparent', outputSize = 256 }) {
+      const img = new Image();
+      img.onload = () => {
+        const canvasDim = 240;
+        const fitZoom = Math.min(canvasDim / img.width, canvasDim / img.height);
+
+        cropState = {
+          active: true,
+          targetType,
+          targetId,
+          title,
+          rawImageSrc,
+          imgElement: img,
+          zoom: Math.max(0.05, Math.min(6, Number(fitZoom.toFixed(2)))),
+          offsetX: 0,
+          offsetY: 0,
+          outputSize,
+          bgMode,
+          isDragging: false,
+          dragStartX: 0,
+          dragStartY: 0,
+          pinchStartDist: null,
+          pinchStartZoom: 1
+        };
+
+        renderCropModalUI();
+        drawCropPreview();
+      };
+      img.src = rawImageSrc;
+    }
+
+    function renderCropModalUI() {
+      const modalRoot = document.getElementById('modal-root');
+      modalRoot.classList.remove('hidden');
+      modalRoot.classList.add('flex');
+      const isPlayer = cropState.targetType === 'playerPhoto' || cropState.targetType === 'newPlayerPhoto';
+
+      modalRoot.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#0077B6]">Editor de Tamaño y Encuadre</span>
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">${escapeHtml(cropState.title)}</h3>
+            </div>
+            <button type="button" onclick="closeModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 font-bold">✕</button>
+          </div>
+
+          <div class="flex flex-col items-center gap-2">
+            <div class="relative p-2 rounded-2xl border-2 border-dashed border-[#009EE3] bg-slate-50">
+              <canvas
+                id="crop-preview-canvas"
+                width="240"
+                height="240"
+                class="crop-grid ${isPlayer ? 'rounded-full' : 'rounded-xl'} cursor-grab active:cursor-grabbing touch-none shadow-inner"
+              ></canvas>
+            </div>
+            <p class="text-[11px] text-slate-500">Arrastrá la imagen para centrarla • Rueda del mouse o pellizco para zoom</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="applyCropPreset('fit')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+              Ajustar Todo
+            </button>
+            <button type="button" onclick="applyCropPreset('fill')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+              Llenar Marco
+            </button>
+            <button type="button" onclick="applyCropPreset('center')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+              Centrar (0,0)
+            </button>
+          </div>
+
+          <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+            <div>
+              <div class="flex justify-between font-bold text-slate-700 mb-1">
+                <span>Zoom (5% a 600%)</span>
+                <span id="crop-zoom-label">${Math.round(cropState.zoom * 100)}%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="nudgeCropZoom(-0.05)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">-</button>
+                <input
+                  id="crop-zoom-slider"
+                  type="range"
+                  min="0.05"
+                  max="6.0"
+                  step="0.01"
+                  value="${cropState.zoom}"
+                  oninput="updateCropZoom(this.value)"
+                  class="flex-1 accent-[#009EE3]"
+                />
+                <button type="button" onclick="nudgeCropZoom(0.05)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">+</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <div class="flex justify-between font-semibold text-slate-600 mb-1">
+                  <span>Posición X</span>
+                  <span id="crop-x-label">${Math.round(cropState.offsetX)} px</span>
+                </div>
+                <input
+                  id="crop-x-slider"
+                  type="range"
+                  min="-400"
+                  max="400"
+                  step="1"
+                  value="${cropState.offsetX}"
+                  oninput="updateCropOffset('x', this.value)"
+                  class="w-full accent-[#009EE3]"
+                />
+              </div>
+              <div>
+                <div class="flex justify-between font-semibold text-slate-600 mb-1">
+                  <span>Posición Y</span>
+                  <span id="crop-y-label">${Math.round(cropState.offsetY)} px</span>
+                </div>
+                <input
+                  id="crop-y-slider"
+                  type="range"
+                  min="-400"
+                  max="400"
+                  step="1"
+                  value="${cropState.offsetY}"
+                  oninput="updateCropOffset('y', this.value)"
+                  class="w-full accent-[#009EE3]"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Resolución Final</label>
+                <select onchange="cropState.outputSize = Number(this.value)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold">
+                  <option value="96" ${cropState.outputSize === 96 ? 'selected' : ''}>96 × 96 px (Compacta)</option>
+                  <option value="128" ${cropState.outputSize === 128 ? 'selected' : ''}>128 × 128 px (Ligera)</option>
+                  <option value="200" ${cropState.outputSize === 200 ? 'selected' : ''}>200 × 200 px (Estándar)</option>
+                  <option value="320" ${cropState.outputSize === 320 ? 'selected' : ''}>320 × 320 px (Alta)</option>
+                  <option value="512" ${cropState.outputSize === 512 ? 'selected' : ''}>512 × 512 px (Ultra HD)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Fondo del Recorte</label>
+                <select onchange="cropState.bgMode = this.value; drawCropPreview();" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold">
+                  <option value="transparent" ${cropState.bgMode === 'transparent' ? 'selected' : ''}>Transparente (PNG)</option>
+                  <option value="#ffffff" ${cropState.bgMode === '#ffffff' ? 'selected' : ''}>Blanco Sólido</option>
+                  <option value="#0F172A" ${cropState.bgMode === '#0F172A' ? 'selected' : ''}>Azul Marino CAT</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+              Cancelar
+            </button>
+            <button type="button" onclick="saveCroppedImage()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#009EE3] hover:bg-[#0077B6] text-white shadow-sm">
+              Aplicar y Guardar
+            </button>
+          </div>
+        </div>
+      `;
+
+      bindCropCanvasEvents();
+    }
+
+    function bindCropCanvasEvents() {
+      const canvas = document.getElementById('crop-preview-canvas');
+      if (!canvas) return;
+
+      canvas.onmousedown = (e) => {
+        cropState.isDragging = true;
+        cropState.dragStartX = e.clientX - cropState.offsetX;
+        cropState.dragStartY = e.clientY - cropState.offsetY;
+      };
+
+      window.onmousemove = (e) => {
+        if (!cropState.isDragging || !cropState.active) return;
+        cropState.offsetX = Math.max(-400, Math.min(400, e.clientX - cropState.dragStartX));
+        cropState.offsetY = Math.max(-400, Math.min(400, e.clientY - cropState.dragStartY));
+        syncCropSliders();
+        drawCropPreview();
+      };
+
+      window.onmouseup = () => {
+        cropState.isDragging = false;
+      };
+
+      canvas.onwheel = (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.05 : -0.05;
+        updateCropZoom(cropState.zoom + delta);
+      };
+
+      canvas.ontouchstart = (e) => {
+        if (e.touches.length === 1) {
+          cropState.isDragging = true;
+          cropState.dragStartX = e.touches[0].clientX - cropState.offsetX;
+          cropState.dragStartY = e.touches[0].clientY - cropState.offsetY;
+        } else if (e.touches.length === 2) {
+          cropState.isDragging = false;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          cropState.pinchStartDist = Math.hypot(dx, dy);
+          cropState.pinchStartZoom = cropState.zoom;
+        }
+      };
+
+      canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && cropState.isDragging) {
+          cropState.offsetX = Math.max(-400, Math.min(400, e.touches[0].clientX - cropState.dragStartX));
+          cropState.offsetY = Math.max(-400, Math.min(400, e.touches[0].clientY - cropState.dragStartY));
+          syncCropSliders();
+          drawCropPreview();
+        } else if (e.touches.length === 2 && cropState.pinchStartDist) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.hypot(dx, dy);
+          const ratio = dist / cropState.pinchStartDist;
+          updateCropZoom(cropState.pinchStartZoom * ratio);
+        }
+      };
+
+      canvas.ontouchend = () => {
+        cropState.isDragging = false;
+        cropState.pinchStartDist = null;
+      };
+    }
+
+    function syncCropSliders() {
+      const zSlider = document.getElementById('crop-zoom-slider');
+      const zLabel = document.getElementById('crop-zoom-label');
+      const xSlider = document.getElementById('crop-x-slider');
+      const xLabel = document.getElementById('crop-x-label');
+      const ySlider = document.getElementById('crop-y-slider');
+      const yLabel = document.getElementById('crop-y-label');
+
+      if (zSlider) zSlider.value = cropState.zoom;
+      if (zLabel) zLabel.textContent = `${Math.round(cropState.zoom * 100)}%`;
+      if (xSlider) xSlider.value = cropState.offsetX;
+      if (xLabel) xLabel.textContent = `${Math.round(cropState.offsetX)} px`;
+      if (ySlider) ySlider.value = cropState.offsetY;
+      if (yLabel) yLabel.textContent = `${Math.round(cropState.offsetY)} px`;
+    }
+
+    function nudgeCropZoom(delta) {
+      updateCropZoom(Number(cropState.zoom) + delta);
+    }
+
+    function updateCropZoom(val) {
+      cropState.zoom = Math.max(0.05, Math.min(6.0, Number(val)));
+      syncCropSliders();
+      drawCropPreview();
+    }
+
+    function updateCropOffset(axis, val) {
+      const num = Math.max(-400, Math.min(400, Number(val)));
+      if (axis === 'x') cropState.offsetX = num;
+      if (axis === 'y') cropState.offsetY = num;
+      syncCropSliders();
+      drawCropPreview();
+    }
+
+    function applyCropPreset(mode) {
+      const img = cropState.imgElement;
+      if (!img) return;
+      const canvasDim = 240;
+      if (mode === 'fit') {
+        cropState.zoom = Math.max(0.05, Math.min(6.0, Math.min(canvasDim / img.width, canvasDim / img.height)));
+        cropState.offsetX = 0;
+        cropState.offsetY = 0;
+      } else if (mode === 'fill') {
+        cropState.zoom = Math.max(0.05, Math.min(6.0, Math.max(canvasDim / img.width, canvasDim / img.height)));
+        cropState.offsetX = 0;
+        cropState.offsetY = 0;
+      } else if (mode === 'center') {
+        cropState.offsetX = 0;
+        cropState.offsetY = 0;
+      }
+      syncCropSliders();
+      drawCropPreview();
+    }
+
+    function drawCropPreview() {
+      const canvas = document.getElementById('crop-preview-canvas');
+      const img = cropState.imgElement;
+      if (!canvas || !img) return;
+      const ctx = canvas.getContext('2d');
+      const dim = canvas.width;
+
+      ctx.clearRect(0, 0, dim, dim);
+
+      if (cropState.bgMode !== 'transparent') {
+        ctx.fillStyle = cropState.bgMode;
+        ctx.fillRect(0, 0, dim, dim);
+      }
+
+      const drawW = img.width * cropState.zoom;
+      const drawH = img.height * cropState.zoom;
+      const drawX = (dim - drawW) / 2 + cropState.offsetX;
+      const drawY = (dim - drawH) / 2 + cropState.offsetY;
+
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    }
+
+    function saveCroppedImage() {
+      const img = cropState.imgElement;
+      if (!img) return;
+
+      const outSize = cropState.outputSize || 256;
+      const previewDim = 240;
+      const ratio = outSize / previewDim;
+
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = outSize;
+      outCanvas.height = outSize;
+      const ctx = outCanvas.getContext('2d');
+
+      if (cropState.bgMode !== 'transparent') {
+        ctx.fillStyle = cropState.bgMode;
+        ctx.fillRect(0, 0, outSize, outSize);
+      }
+
+      const drawW = img.width * cropState.zoom * ratio;
+      const drawH = img.height * cropState.zoom * ratio;
+      const drawX = (outSize - drawW) / 2 + cropState.offsetX * ratio;
+      const drawY = (outSize - drawH) / 2 + cropState.offsetY * ratio;
+
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+      const finalDataUrl = cropState.bgMode === 'transparent'
+        ? outCanvas.toDataURL('image/png')
+        : outCanvas.toDataURL('image/jpeg', 0.88);
+
+      if (cropState.targetType === 'headerCrest') {
+        tournamentData.customHeaderCrestUrl = finalDataUrl;
+        saveTournamentData();
+        showToast('Escudo principal del header actualizado', 'success');
+      } else if (cropState.targetType === 'teamCrest') {
+        const team = getTeamById(cropState.targetId);
+        if (team) {
+          team.customCrestUrl = finalDataUrl;
+          saveTournamentData();
+          showToast(`Escudo de ${team.name} actualizado`, 'success');
+        }
+      } else if (cropState.targetType === 'playerPhoto') {
+        const team = getTeamById(uiState.adminSelectedTeamId);
+        const player = team?.players.find(p => p.id === cropState.targetId);
+        if (player) {
+          player.photoUrl = finalDataUrl;
+          saveTournamentData();
+          showToast(`Foto de ${player.name} actualizada`, 'success');
+        }
+      } else if (cropState.targetType === 'newPlayerPhoto') {
+        uiState.pendingNewPlayerPhoto = finalDataUrl;
+        showToast('Foto lista para el nuevo socio', 'success');
+      }
+
+      closeModal();
+      renderApp();
+    }
+
+    function updateGlobalImageSetting(key, val) {
+      const settings = getImageSettings();
+      let num = Number(val);
+      if (key === 'headerCrestSize') {
+        num = Math.max(28, Math.min(180, num));
+      } else if (key === 'teamCrestScale' || key === 'playerPhotoScale') {
+        num = Math.max(40, Math.min(260, num));
+      }
+      settings[key] = num;
+      saveTournamentData();
+      renderApp();
+    }
+
+    function resetGlobalImageSettings() {
+      tournamentData.imageSettings = {
+        headerCrestSize: 58,
+        teamCrestScale: 100,
+        playerPhotoScale: 100
+      };
+      saveTournamentData();
+      showToast('Escalas visuales restablecidas al 100%', 'info');
+      renderApp();
+    }
+
+    function batchResizeAllImages() {
+      const maxDim = Number(document.getElementById('batch-max-dim')?.value || 160);
+      const quality = Number(document.getElementById('batch-quality')?.value || 0.82);
+
+      const tasks = [];
+
+      const resizeDataUrl = (dataUrl, keepAlpha) => new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = maxDim;
+          canvas.height = maxDim;
+          const ctx = canvas.getContext('2d');
+          const scale = Math.min(maxDim / img.width, maxDim / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          ctx.drawImage(img, (maxDim - w) / 2, (maxDim - h) / 2, w, h);
+          resolve(keepAlpha ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+
+      if (tournamentData.customHeaderCrestUrl) {
+        tasks.push(
+          resizeDataUrl(tournamentData.customHeaderCrestUrl, true).then(res => {
+            tournamentData.customHeaderCrestUrl = res;
+          })
+        );
+      }
+
+      tournamentData.teams.forEach(t => {
+        if (t.customCrestUrl) {
+          tasks.push(
+            resizeDataUrl(t.customCrestUrl, true).then(res => {
+              t.customCrestUrl = res;
+            })
+          );
+        }
+        t.players.forEach(p => {
+          if (p.photoUrl) {
+            tasks.push(
+              resizeDataUrl(p.photoUrl, false).then(res => {
+                p.photoUrl = res;
+              })
+            );
+          }
+        });
+      });
+
+      if (tasks.length === 0) {
+        showToast('No hay imágenes personalizadas cargadas para reajustar', 'info');
+        return;
+      }
+
+      Promise.all(tasks).then(() => {
+        saveTournamentData();
+        showToast(`Se reajustaron ${tasks.length} imágenes a ${maxDim}×${maxDim} px`, 'success');
+        renderApp();
+      });
+    }
+
+    // -------------------------------------------------------------------
+    // 8. ACCIONES DE PLANILLERO / ADMINISTRACIÓN
+    // -------------------------------------------------------------------
+    function resetCustomHeaderCrest() {
+      tournamentData.customHeaderCrestUrl = null;
+      saveTournamentData();
+      showToast('Escudo oficial de Temperley restablecido', 'info');
+      renderApp();
+    }
+
+    function resetTeamCrest(teamId) {
+      const team = getTeamById(teamId);
+      if (!team) return;
+      team.customCrestUrl = null;
+      saveTournamentData();
+      showToast('Escudo heráldico restablecido', 'info');
+      renderApp();
+    }
+
+    function updateGenericCrestProp(teamId, prop, value) {
+      const team = getTeamById(teamId);
+      if (!team) return;
+      if (prop === 'code') {
+        const cleanCode = String(value || '').trim().toUpperCase().slice(0, 4);
+        team.code = cleanCode || team.name.slice(0, 3).toUpperCase();
+      } else {
+        team[prop] = value;
+      }
+      team.customCrestUrl = null;
+      saveTournamentData();
+      renderApp();
+    }
+
+    function clearPlayerPhoto(teamId, playerId) {
+      const team = getTeamById(teamId);
+      const player = team?.players.find(p => p.id === playerId);
+      if (!player) return;
+      player.photoUrl = null;
+      saveTournamentData();
+      showToast('Se restableció la silueta genérica', 'info');
+      renderApp();
+    }
+
+    function setMatchStatus(matchId, newStatus) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      if ((newStatus === 'LIVE' || newStatus === 'FINISHED') && (!match.homeId || !match.awayId)) {
+        showToast('Todavía no están definidos ambos equipos para este cruce', 'error');
+        renderApp();
+        return;
+      }
+
+      match.status = newStatus;
+      if ((newStatus === 'LIVE' || newStatus === 'FINISHED') && match.homeGoals === null) {
+        match.homeGoals = 0;
+        match.awayGoals = 0;
+      }
+      if (newStatus === 'SCHEDULED') {
+        match.homeGoals = null;
+        match.awayGoals = null;
+        match.homePen = null;
+        match.awayPen = null;
+        match.goalEvents = [];
+      }
+
+      syncKnockoutBracket();
+      saveTournamentData();
+      renderApp();
+    }
+
+    function openGoalModal(matchId, side) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      const teamId = side === 'home' ? match.homeId : match.awayId;
+      const team = getTeamById(teamId);
+      if (!team) {
+        showToast('Equipo aún no definido en este partido', 'error');
+        return;
+      }
+
+      const modalRoot = document.getElementById('modal-root');
+      modalRoot.classList.remove('hidden');
+      modalRoot.classList.add('flex');
+      modalRoot.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+          <div class="flex items-center gap-3 border-b border-slate-200 pb-3">
+            ${renderTeamCrest(team, 38)}
+            <div>
+              <span class="text-xs font-bold uppercase text-[#009EE3]">Registrar Gol</span>
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">${escapeHtml(team.name)}</h3>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-500">Seleccioná al socio autor del gol en la lista de buena fe:</p>
+
+          <div class="max-h-72 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl">
+            ${team.players.map(p => `
+              <button
+                type="button"
+                onclick="confirmAddGoal('${match.id}', '${side}', '${p.id}')"
+                class="w-full px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-[#E0F5FE] text-left transition-colors"
+              >
+                <div class="flex items-center gap-3 min-w-0">
+                  ${renderPlayerAvatar(p, 34)}
+                  <span class="font-semibold text-sm text-slate-900 truncate">${escapeHtml(p.name)}</span>
+                </div>
+                <span class="text-xs font-bold text-[#0077B6] shrink-0">+ Gol</span>
+              </button>
+            `).join('')}
+            <button
+              type="button"
+              onclick="confirmAddGoal('${match.id}', '${side}', null)"
+              class="w-full px-3.5 py-2.5 flex items-center justify-between gap-3 hover:bg-slate-100 text-left text-slate-500"
+            >
+              <span class="text-xs font-semibold">Gol en contra / Sin asignar</span>
+              <span class="text-xs font-bold">+ Gol</span>
+            </button>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmAddGoal(matchId, side, playerId) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      if (match.status === 'SCHEDULED') {
+        match.status = 'LIVE';
+      }
+      if (match.homeGoals === null) match.homeGoals = 0;
+      if (match.awayGoals === null) match.awayGoals = 0;
+
+      const teamId = side === 'home' ? match.homeId : match.awayId;
+      if (side === 'home') match.homeGoals += 1;
+      else match.awayGoals += 1;
+
+      match.goalEvents.push({ teamId, playerId: playerId || null });
+
+      syncKnockoutBracket();
+      saveTournamentData();
+      closeModal();
+      showToast('Gol registrado en el marcador', 'success');
+      renderApp();
+    }
+
+    function removeLastGoal(matchId, side) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      const teamId = side === 'home' ? match.homeId : match.awayId;
+
+      if (side === 'home' && (match.homeGoals || 0) > 0) {
+        match.homeGoals -= 1;
+      } else if (side === 'away' && (match.awayGoals || 0) > 0) {
+        match.awayGoals -= 1;
+      } else {
+        return;
+      }
+
+      for (let i = match.goalEvents.length - 1; i >= 0; i--) {
+        if (match.goalEvents[i].teamId === teamId) {
+          match.goalEvents.splice(i, 1);
+          break;
+        }
+      }
+
+      syncKnockoutBracket();
+      saveTournamentData();
+      showToast('Se descontó un gol', 'info');
+      renderApp();
+    }
+
+    function updateKnockoutPenalty(matchId, side, val) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      const num = val === '' ? null : Math.max(0, parseInt(val, 10) || 0);
+      if (side === 'home') match.homePen = num;
+      else match.awayPen = num;
+      syncKnockoutBracket();
+      saveTournamentData();
+      renderApp();
+    }
+
+    function updateTeamName(teamId, newName) {
+      const team = getTeamById(teamId);
+      const clean = newName.trim();
+      if (!team || !clean) return;
+      team.name = clean;
+      saveTournamentData();
+      showToast('Nombre del equipo actualizado', 'success');
+      renderApp();
+    }
+
+    function addPlayerToTeam(e, teamId) {
+      e.preventDefault();
+      const team = getTeamById(teamId);
+      const input = document.getElementById('new-player-name-input');
+      const name = input?.value.trim();
+      if (!team || !name) return;
+
+      team.players.push({
+        id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name,
+        photoUrl: uiState.pendingNewPlayerPhoto || null
+      });
+      uiState.pendingNewPlayerPhoto = null;
+      saveTournamentData();
+      showToast(`${name} agregado al plantel`, 'success');
+      renderApp();
+    }
+
+    function removePlayerFromTeam(teamId, playerId) {
+      const team = getTeamById(teamId);
+      if (!team) return;
+      team.players = team.players.filter(p => p.id !== playerId);
+      saveTournamentData();
+      showToast('Jugador eliminado del plantel', 'info');
+      renderApp();
+    }
+
+    function simulateGroupStage() {
+      // Si el fixture de grupos está vacío, generamos los 15 partidos base (3 por grupo) primero
+      const existingGroupMatches = tournamentData.matches.filter(m => m.stage === 'GROUP');
+      if (existingGroupMatches.length === 0) {
+        const baseTimes = ['09:00', '09:45', '10:30', '11:15', '12:00', '12:45', '13:30', '14:15', '15:00', '15:45', '16:30', '17:15', '18:00', '18:45', '19:30'];
+        let tIdx = 0;
+        TOURNAMENT_GROUPS.forEach(g => {
+          const gTeams = tournamentData.teams.filter(t => t.group === g);
+          if (gTeams.length >= 3) {
+            const pairs = [
+              [gTeams[0].id, gTeams[1].id, 1],
+              [gTeams[0].id, gTeams[2].id, 2],
+              [gTeams[1].id, gTeams[2].id, 3]
+            ];
+            pairs.forEach(([hId, aId, rnd]) => {
+              tournamentData.matches.unshift({
+                id: 'm_sim_' + g + '_' + rnd + '_' + Math.random().toString(36).slice(2, 6),
+                stage: 'GROUP',
+                group: g,
+                round: rnd,
+                day: 'Sábado',
+                time: baseTimes[tIdx % baseTimes.length],
+                pitch: (tIdx % 2 === 0) ? 'Cancha 1' : 'Cancha 2',
+                homeId: hId,
+                awayId: aId,
+                homeGoals: null,
+                awayGoals: null,
+                status: 'SCHEDULED',
+                goalEvents: []
+              });
+              tIdx += 1;
+            });
+          }
+        });
+      }
+
+      tournamentData.matches.forEach(m => {
+        if (m.stage === 'GROUP' && m.status !== 'FINISHED') {
+          const homeT = getTeamById(m.homeId);
+          const awayT = getTeamById(m.awayId);
+          const hg = Math.floor(Math.random() * 4);
+          const ag = Math.floor(Math.random() * 4);
+          m.homeGoals = hg;
+          m.awayGoals = ag;
+          m.status = 'FINISHED';
+          m.goalEvents = [];
+
+          for (let i = 0; i < hg; i++) {
+            const p = homeT?.players[Math.floor(Math.random() * homeT.players.length)];
+            m.goalEvents.push({ teamId: m.homeId, playerId: p ? p.id : null });
+          }
+          for (let i = 0; i < ag; i++) {
+            const p = awayT?.players[Math.floor(Math.random() * awayT.players.length)];
+            m.goalEvents.push({ teamId: m.awayId, playerId: p ? p.id : null });
+          }
+        }
+      });
+
+      syncKnockoutBracket();
+      saveTournamentData();
+      showToast('Fase de grupos simulada y cuartos armados', 'success');
+      renderApp();
+    }
+
+    // -------------------------------------------------------------------
+    // 8B. CONSTRUCTOR MANUAL DE FIXTURE (INTERVALOS DE 5 MINUTOS)
+    // -------------------------------------------------------------------
+    function getFiveMinuteTimeOptions(selectedTime = '09:00') {
+      const options = [];
+      for (let h = 8; h <= 23; h++) {
+        for (let m = 0; m < 60; m += 5) {
+          const hh = String(h).padStart(2, '0');
+          const mm = String(m).padStart(2, '0');
+          const val = `${hh}:${mm}`;
+          options.push(`<option value="${val}" ${val === selectedTime ? 'selected' : ''}>${val} hs</option>`);
+        }
+      }
+      return options.join('');
+    }
+
+    function onNewMatchGroupChange(groupLetter) {
+      uiState.newMatchGroup = groupLetter;
+      const groupTeams = tournamentData.teams.filter(t => t.group === groupLetter);
+      uiState.newMatchHomeId = groupTeams[0]?.id || '';
+      uiState.newMatchAwayId = groupTeams[1]?.id || '';
+      renderApp();
+    }
+
+    function addManualFixtureMatch(e) {
+      e.preventDefault();
+      const group = uiState.newMatchGroup;
+      const homeId = uiState.newMatchHomeId;
+      const awayId = uiState.newMatchAwayId;
+      const day = uiState.newMatchDay || 'Sábado';
+      const time = uiState.newMatchTime || '09:00';
+      const pitch = (uiState.newMatchPitch || 'Cancha 1').trim();
+
+      if (!group || !homeId || !awayId) {
+        showToast('Seleccioná grupo, equipo local y equipo visitante', 'error');
+        return;
+      }
+      if (homeId === awayId) {
+        showToast('El equipo local y el visitante no pueden ser el mismo', 'error');
+        return;
+      }
+
+      const existingInGroup = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === group);
+      const duplicatePair = existingInGroup.find(
+        m => (m.homeId === homeId && m.awayId === awayId) || (m.homeId === awayId && m.awayId === homeId)
+      );
+      if (duplicatePair) {
+        showToast('Ese cruce ya está programado en este grupo', 'error');
+        return;
+      }
+
+      const newMatch = {
+        id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        stage: 'GROUP',
+        group,
+        round: existingInGroup.length + 1,
+        day,
+        time,
+        pitch: pitch || 'Cancha 1',
+        homeId,
+        awayId,
+        homeGoals: null,
+        awayGoals: null,
+        status: 'SCHEDULED',
+        goalEvents: []
+      };
+
+      const groupMatches = [...tournamentData.matches.filter(m => m.stage === 'GROUP'), newMatch];
+      groupMatches.sort((a, b) => {
+        if (a.day !== b.day) return a.day.localeCompare(b.day);
+        return a.time.localeCompare(b.time);
+      });
+      const knockoutMatches = tournamentData.matches.filter(m => m.stage !== 'GROUP');
+      tournamentData.matches = [...groupMatches, ...knockoutMatches];
+
+      syncKnockoutBracket();
+      saveTournamentData();
+      showToast(`Partido agregado al Grupo ${group} (${time} hs)`, 'success');
+      renderApp();
+    }
+
+    function updateMatchScheduleField(matchId, field, value) {
+      const match = tournamentData.matches.find(m => m.id === matchId);
+      if (!match) return;
+      match[field] = value;
+
+      if (match.stage === 'GROUP') {
+        const groupMatches = tournamentData.matches.filter(m => m.stage === 'GROUP');
+        groupMatches.sort((a, b) => {
+          if (a.day !== b.day) return a.day.localeCompare(b.day);
+          return a.time.localeCompare(b.time);
+        });
+        const knockoutMatches = tournamentData.matches.filter(m => m.stage !== 'GROUP');
+        tournamentData.matches = [...groupMatches, ...knockoutMatches];
+      }
+
+      saveTournamentData();
+      showToast('Horario / cancha actualizado', 'success');
+      renderApp();
+    }
+
+    function swapFixtureMatchSides(matchId) {
+      const match = tournamentData.matches.find(m => m.id === matchId && m.stage === 'GROUP');
+      if (!match) return;
+      if (match.status !== 'SCHEDULED') {
+        showToast('Solo podés invertir localía en partidos programados', 'error');
+        return;
+      }
+      const tmp = match.homeId;
+      match.homeId = match.awayId;
+      match.awayId = tmp;
+      saveTournamentData();
+      showToast('Local y visitante invertidos', 'info');
+      renderApp();
+    }
+
+    function deleteFixtureMatch(matchId) {
+      const match = tournamentData.matches.find(m => m.id === matchId && m.stage === 'GROUP');
+      if (!match) return;
+      const homeT = getTeamById(match.homeId);
+      const awayT = getTeamById(match.awayId);
+
+      openConfirmModal(
+        'Eliminar Partido del Fixture',
+        `¿Confirmás eliminar el partido ${homeT?.name || ''} vs ${awayT?.name || ''} (Grupo ${match.group})?`,
+        () => {
+          tournamentData.matches = tournamentData.matches.filter(m => m.id !== matchId);
+          let r = 1;
+          tournamentData.matches.forEach(m => {
+            if (m.stage === 'GROUP' && m.group === match.group) {
+              m.round = r++;
+            }
+          });
+          syncKnockoutBracket();
+          saveTournamentData();
+          showToast('Partido eliminado del fixture', 'info');
+          renderApp();
+        }
+      );
+    }
+
+    function clearAllGroupFixtures() {
+      openConfirmModal(
+        'Limpiar Fixture de Grupos',
+        'Se eliminarán todos los partidos de los Grupos A, B, C, D y E para configurarlos desde cero. ¿Continuar?',
+        () => {
+          tournamentData.matches = tournamentData.matches.filter(m => m.stage !== 'GROUP');
+          syncKnockoutBracket();
+          saveTournamentData();
+          showToast('Fixture de grupos limpiado', 'info');
+          renderApp();
+        }
+      );
+    }
+
+    function resetTournamentData() {
+      openConfirmModal(
+        'Reiniciar Torneo Completo',
+        'Se borrarán todos los resultados, escudos y fotos cargadas, volviendo al estado inicial limpio. ¿Continuar?',
+        () => {
+          tournamentData = createInitialData();
+          saveTournamentData();
+          showToast('Torneo reiniciado a cero', 'info');
+          renderApp();
+        }
+      );
+    }
+
+    function exportTournamentJson() {
+      const blob = new Blob([JSON.stringify(tournamentData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `torneo-temperley-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Respaldo JSON descargado', 'success');
+    }
+
+    function handleImportJsonFile(e) {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (!parsed || !Array.isArray(parsed.teams) || !Array.isArray(parsed.matches)) {
+            throw new Error('Formato inválido');
+          }
+          tournamentData = parsed;
+          syncKnockoutBracket();
+          saveTournamentData();
+          showToast('Datos importados correctamente', 'success');
+          renderApp();
+        } catch (err) {
+          showToast('El archivo JSON no es válido', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // -------------------------------------------------------------------
+    // 9. RENDERIZADO DE VISTAS PÚBLICAS
+    // -------------------------------------------------------------------
+    function renderNavigation() {
+      const nav = document.getElementById('main-nav');
+      const tabs = [
+        { id: 'posiciones', label: 'Posiciones' },
+        { id: 'fixture', label: 'Fixture' },
+        { id: 'fase-final', label: 'Fase Final' },
+        { id: 'goleadores', label: 'Goleadores' }
+      ];
+
+      if (uiState.adminUnlocked) {
+        tabs.push({ id: 'admin', label: 'Planillero / Admin' });
+      }
+
+      nav.innerHTML = tabs.map(t => {
+        const active = uiState.activeTab === t.id;
+        return `
+          <button
+            type="button"
+            onclick="uiState.activeTab = '${t.id}'; renderApp();"
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
+              active
+                ? 'bg-[#009EE3] text-white shadow-sm'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
+            }"
+          >
+            ${t.label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderStandingsView() {
+      const groups = TOURNAMENT_GROUPS;
+      const bestSeconds = computeBestSeconds();
+      const allGroupsDone = isAllGroupsCompleted();
+
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase text-slate-900">Fase de Grupos — 5 Zonas de 3</h2>
+              <p class="text-xs sm:text-sm text-slate-500">Clasifican a Cuartos de Final los <strong class="text-[#0077B6]">5 primeros de cada zona</strong> + los <strong class="text-amber-700">3 mejores segundos</strong>.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600 bg-white px-3 py-2 rounded-xl border border-slate-200 self-start">
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-[#009EE3] inline-block"></span> 1° Clasifica directo</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span> 2° Tabla Mejores Segundos</span>
+            </div>
+          </div>
+
+          <!-- 5 Grupos de 3 equipos -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            ${groups.map(g => {
+              const rows = computeGroupStandings(g);
+              const completed = isGroupCompleted(g);
+              const groupMatchesCount = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g && m.status === 'FINISHED').length;
+              return `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                  <div class="bg-[#0F172A] text-white px-4 py-3 flex items-center justify-between border-b-2 border-[#009EE3]">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-lg bg-[#009EE3] text-white font-sport font-bold text-base flex items-center justify-center">${g}</span>
+                      <h3 class="font-sport text-lg font-bold uppercase tracking-wide">Grupo ${g}</h3>
+                    </div>
+                    <span class="text-[11px] font-semibold ${completed ? 'text-emerald-300' : 'text-sky-300'}">
+                      ${completed ? '✅ Grupo completado' : `${groupMatchesCount}/3 partidos jugados`}
+                    </span>
+                  </div>
+
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                      <thead>
+                        <tr class="bg-slate-50 text-[11px] font-extrabold uppercase text-slate-500 border-b border-slate-200">
+                          <th class="py-2.5 pl-3 pr-1 w-8 text-center">#</th>
+                          <th class="py-2.5 px-2">Equipo</th>
+                          <th class="py-2.5 px-2 text-center text-slate-900">PTS</th>
+                          <th class="py-2.5 px-1.5 text-center">PJ</th>
+                          <th class="py-2.5 px-1.5 text-center">PG</th>
+                          <th class="py-2.5 px-1.5 text-center">PE</th>
+                          <th class="py-2.5 px-1.5 text-center">PP</th>
+                          <th class="py-2.5 px-1.5 text-center hidden sm:table-cell">GF</th>
+                          <th class="py-2.5 px-1.5 text-center hidden sm:table-cell">GC</th>
+                          <th class="py-2.5 pl-1.5 pr-3 text-center">DIF</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
+                        ${rows.map((r, idx) => {
+                          const isFirst = idx === 0;
+                          const isSecond = idx === 1;
+                          const rowBg = isFirst ? 'bg-[#E0F5FE]/55' : isSecond ? 'bg-amber-50/60' : 'hover:bg-slate-50';
+                          const badgeStyle = isFirst
+                            ? 'bg-[#009EE3] text-white'
+                            : isSecond
+                              ? 'bg-amber-500 text-white'
+                              : 'bg-slate-100 text-slate-600';
+                          return `
+                            <tr class="${rowBg} transition-colors">
+                              <td class="py-2.5 pl-3 pr-1 text-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-extrabold ${badgeStyle}">
+                                  ${idx + 1}
+                                </span>
+                              </td>
+                              <td class="py-2.5 px-2">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                  ${renderTeamCrest(r.team, 28)}
+                                  <span class="font-bold text-slate-900 truncate">${escapeHtml(r.team.name)}</span>
+                                </div>
+                              </td>
+                              <td class="py-2.5 px-2 text-center font-extrabold text-slate-900">${r.pts}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-600">${r.pj}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-600">${r.pg}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-600">${r.pe}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-600">${r.pp}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-500 hidden sm:table-cell">${r.gf}</td>
+                              <td class="py-2.5 px-1.5 text-center text-slate-500 hidden sm:table-cell">${r.gc}</td>
+                              <td class="py-2.5 pl-1.5 pr-3 text-center font-bold ${
+                                r.dif > 0 ? 'text-emerald-600' : r.dif < 0 ? 'text-red-500' : 'text-slate-500'
+                              }">
+                                ${r.dif > 0 ? '+' + r.dif : r.dif}
+                              </td>
+                            </tr>
+                          `;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Tabla Extra: Mejores Segundos (Clasifican 3 de 5) -->
+          <div class="bg-white rounded-2xl border-2 border-[#009EE3] shadow-sm overflow-hidden">
+            <div class="bg-[#0F172A] text-white px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-[#009EE3]">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-1 rounded-lg bg-[#009EE3] text-white font-sport font-bold text-sm uppercase">Repechaje</span>
+                <div>
+                  <h3 class="font-sport text-lg sm:text-xl font-bold uppercase tracking-wide">Tabla de Mejores Segundos</h3>
+                  <p class="text-[11px] text-slate-300">Los <strong>3 mejores segundos</strong> avanzan a Cuartos de Final una vez completados los 5 grupos.</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${allGroupsDone ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'bg-white/10 text-sky-200'}">
+                ${allGroupsDone ? '✅ Clasificados definidos' : '⏳ Tabla parcial en curso'}
+              </span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-50 text-[11px] font-extrabold uppercase text-slate-500 border-b border-slate-200">
+                    <th class="py-2.5 pl-4 pr-1 w-10 text-center">#</th>
+                    <th class="py-2.5 px-2 w-16 text-center">Zona</th>
+                    <th class="py-2.5 px-2">Equipo (2° de Grupo)</th>
+                    <th class="py-2.5 px-2 text-center text-slate-900">PTS</th>
+                    <th class="py-2.5 px-1.5 text-center">PJ</th>
+                    <th class="py-2.5 px-1.5 text-center">PG</th>
+                    <th class="py-2.5 px-1.5 text-center">PE</th>
+                    <th class="py-2.5 px-1.5 text-center">PP</th>
+                    <th class="py-2.5 px-1.5 text-center hidden sm:table-cell">GF</th>
+                    <th class="py-2.5 px-1.5 text-center hidden sm:table-cell">GC</th>
+                    <th class="py-2.5 px-2 text-center">DIF</th>
+                    <th class="py-2.5 pl-2 pr-4 text-right">Estado</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
+                  ${bestSeconds.map((r, idx) => {
+                    const qualifies = idx < 3;
+                    return `
+                      <tr class="${qualifies ? 'bg-[#E0F5FE]/55' : 'hover:bg-slate-50'} transition-colors">
+                        <td class="py-3 pl-4 pr-1 text-center">
+                          <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-extrabold ${
+                            qualifies ? 'bg-[#009EE3] text-white' : 'bg-slate-200 text-slate-600'
+                          }">
+                            ${idx + 1}
+                          </span>
+                        </td>
+                        <td class="py-3 px-2 text-center">
+                          <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-sport text-xs font-bold">
+                            Grupo ${r.group}
+                          </span>
+                        </td>
+                        <td class="py-3 px-2">
+                          <div class="flex items-center gap-2.5 min-w-0">
+                            ${renderTeamCrest(r.team, 28)}
+                            <span class="font-bold text-slate-900 truncate">${escapeHtml(r.team.name)}</span>
+                          </div>
+                        </td>
+                        <td class="py-3 px-2 text-center font-extrabold text-slate-900">${r.pts}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-600">${r.pj}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-600">${r.pg}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-600">${r.pe}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-600">${r.pp}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-500 hidden sm:table-cell">${r.gf}</td>
+                        <td class="py-3 px-1.5 text-center text-slate-500 hidden sm:table-cell">${r.gc}</td>
+                        <td class="py-3 px-2 text-center font-bold ${
+                          r.dif > 0 ? 'text-emerald-600' : r.dif < 0 ? 'text-red-500' : 'text-slate-500'
+                        }">
+                          ${r.dif > 0 ? '+' + r.dif : r.dif}
+                        </td>
+                        <td class="py-3 pl-2 pr-4 text-right">
+                          ${qualifies
+                            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                                ${allGroupsDone ? 'Clasificado' : 'En zona (Parcial)'}
+                              </span>`
+                            : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500">
+                                Fuera
+                              </span>`
+                          }
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFixtureView() {
+      const searchLower = uiState.fixtureSearch.trim().toLowerCase();
+
+      const filtered = tournamentData.matches.filter(m => {
+        if (uiState.fixtureDay !== 'ALL' && m.day !== uiState.fixtureDay) return false;
+        if (uiState.fixtureGroup !== 'ALL') {
+          if (uiState.fixtureGroup === 'KNOCKOUT') {
+            if (m.stage === 'GROUP') return false;
+          } else if (m.group !== uiState.fixtureGroup) {
+            return false;
+          }
+        }
+        if (searchLower) {
+          const homeName = (getTeamById(m.homeId)?.name || m.seedHome || '').toLowerCase();
+          const awayName = (getTeamById(m.awayId)?.name || m.seedAway || '').toLowerCase();
+          if (!homeName.includes(searchLower) && !awayName.includes(searchLower)) return false;
+        }
+        return true;
+      });
+
+      return `
+        <div class="space-y-5">
+          <div>
+            <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase text-slate-900">Fixture y Resultados</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Consultá horarios, canchas y goleadores de cada encuentro del fin de semana.</p>
+          </div>
+
+          <!-- Filtros -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row gap-3">
+            <div class="flex flex-wrap gap-1.5">
+              ${['ALL', 'Sábado', 'Domingo'].map(d => `
+                <button
+                  type="button"
+                  onclick="uiState.fixtureDay='${d}'; renderApp();"
+                  class="px-3.5 py-2 rounded-xl text-xs font-bold transition-colors ${
+                    uiState.fixtureDay === d ? 'bg-[#009EE3] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }"
+                >
+                  ${d === 'ALL' ? 'Todos los días' : d}
+                </button>
+              `).join('')}
+            </div>
+
+            <select
+              onchange="uiState.fixtureGroup=this.value; renderApp();"
+              class="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700"
+            >
+              <option value="ALL" ${uiState.fixtureGroup === 'ALL' ? 'selected' : ''}>Todas las Zonas / Instancias</option>
+              <option value="A" ${uiState.fixtureGroup === 'A' ? 'selected' : ''}>Grupo A</option>
+              <option value="B" ${uiState.fixtureGroup === 'B' ? 'selected' : ''}>Grupo B</option>
+              <option value="C" ${uiState.fixtureGroup === 'C' ? 'selected' : ''}>Grupo C</option>
+              <option value="D" ${uiState.fixtureGroup === 'D' ? 'selected' : ''}>Grupo D</option>
+              <option value="E" ${uiState.fixtureGroup === 'E' ? 'selected' : ''}>Grupo E</option>
+              <option value="KNOCKOUT" ${uiState.fixtureGroup === 'KNOCKOUT' ? 'selected' : ''}>Fase Final (Domingo)</option>
+            </select>
+
+            <input
+              type="text"
+              value="${escapeHtml(uiState.fixtureSearch)}"
+              oninput="uiState.fixtureSearch=this.value; renderApp();"
+              placeholder="Buscar equipo..."
+              class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-[#009EE3] focus:outline-none"
+            />
+          </div>
+
+          <!-- Listado de Partidos -->
+          ${filtered.length === 0
+            ? `<div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500 text-sm">
+                No se encontraron partidos con los filtros seleccionados.
+              </div>`
+            : `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ${filtered.map(m => renderMatchCard(m)).join('')}
+              </div>`
+          }
+        </div>
+      `;
+    }
+
+    function renderMatchCard(m) {
+      const homeTeam = getTeamById(m.homeId);
+      const awayTeam = getTeamById(m.awayId);
+      const stageBadge = m.stage === 'GROUP' ? `Grupo ${m.group}` : m.label;
+
+      let statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">Programado</span>`;
+      if (m.status === 'LIVE') {
+        statusHtml = `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700"><span class="w-1.5 h-1.5 rounded-full bg-red-600 live-dot"></span> En Juego</span>`;
+      } else if (m.status === 'FINISHED') {
+        statusHtml = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Finalizado</span>`;
+      }
+
+      const scorersSummary = (m.goalEvents || [])
+        .map(ev => {
+          const p = getPlayerById(ev.teamId, ev.playerId);
+          return p ? p.name : null;
+        })
+        .filter(Boolean);
+
+      return `
+        <div class="bg-white rounded-2xl border ${m.status === 'LIVE' ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} p-4 shadow-2xs flex flex-col justify-between gap-3">
+          <div class="flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-[#0F172A] text-white font-sport uppercase tracking-wide">${escapeHtml(stageBadge)}</span>
+              <span class="text-slate-500 font-semibold">${escapeHtml(m.day)} • ${escapeHtml(m.time)} • ${escapeHtml(m.pitch)}</span>
+            </div>
+            ${statusHtml}
+          </div>
+
+          <div class="grid grid-cols-11 items-center gap-2 py-1">
+            <div class="col-span-4 flex flex-col items-center text-center gap-1.5">
+              ${renderTeamCrest(homeTeam, 38)}
+              <span class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 leading-tight">
+                ${escapeHtml(homeTeam ? homeTeam.name : m.seedHome)}
+              </span>
+            </div>
+
+            <div class="col-span-3 flex flex-col items-center justify-center">
+              ${m.status === 'SCHEDULED'
+                ? `<span class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-sport text-lg font-bold">VS</span>`
+                : `<div class="px-3 py-1.5 rounded-xl bg-[#0F172A] text-white font-sport text-2xl font-bold tracking-wider">
+                    ${m.homeGoals} - ${m.awayGoals}
+                  </div>`
+              }
+              ${m.homePen !== null && m.awayPen !== null
+                ? `<span class="text-[11px] font-bold text-[#0077B6] mt-1">Penales: ${m.homePen} - ${m.awayPen}</span>`
+                : ''
+              }
+            </div>
+
+            <div class="col-span-4 flex flex-col items-center text-center gap-1.5">
+              ${renderTeamCrest(awayTeam, 38)}
+              <span class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-2 leading-tight">
+                ${escapeHtml(awayTeam ? awayTeam.name : m.seedAway)}
+              </span>
+            </div>
+          </div>
+
+          ${scorersSummary.length > 0
+            ? `<div class="pt-2 border-t border-slate-100 text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
+                <span class="font-bold text-slate-700">⚽ Goles:</span>
+                <span>${escapeHtml(scorersSummary.join(', '))}</span>
+              </div>`
+            : ''
+          }
+        </div>
+      `;
+    }
+
+    function renderKnockoutView() {
+      const qfs = tournamentData.matches.filter(m => m.stage === 'QF');
+      const sfs = tournamentData.matches.filter(m => m.stage === 'SF');
+      const fin = tournamentData.matches.find(m => m.stage === 'FINAL');
+      const championId = getMatchWinnerId(fin);
+      const championTeam = getTeamById(championId);
+
+      const renderBracketCard = (m, highlight = false) => {
+        const homeT = getTeamById(m.homeId);
+        const awayT = getTeamById(m.awayId);
+        const winId = getMatchWinnerId(m);
+
+        return `
+          <div class="bg-white rounded-2xl border ${highlight ? 'border-2 border-[#009EE3] shadow-md' : 'border-slate-200 shadow-2xs'} p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+              <span class="uppercase text-[#0077B6]">${escapeHtml(m.label)}</span>
+              <span>${escapeHtml(m.time)} • ${escapeHtml(m.pitch)}</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between gap-2 p-2 rounded-xl ${winId && winId === m.homeId ? 'bg-[#E0F5FE] font-extrabold' : 'bg-slate-50'}">
+                <div class="flex items-center gap-2 min-w-0">
+                  ${renderTeamCrest(homeT, 24)}
+                  <span class="text-xs sm:text-sm truncate ${homeT ? 'text-slate-900 font-bold' : 'text-slate-400 italic'}">
+                    ${escapeHtml(homeT ? homeT.name : m.seedHome)}
+                  </span>
+                </div>
+                <span class="font-sport text-base font-bold text-slate-900 shrink-0">
+                  ${m.homeGoals !== null ? m.homeGoals : '-'}${m.homePen !== null ? ` (${m.homePen})` : ''}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 p-2 rounded-xl ${winId && winId === m.awayId ? 'bg-[#E0F5FE] font-extrabold' : 'bg-slate-50'}">
+                <div class="flex items-center gap-2 min-w-0">
+                  ${renderTeamCrest(awayT, 24)}
+                  <span class="text-xs sm:text-sm truncate ${awayT ? 'text-slate-900 font-bold' : 'text-slate-400 italic'}">
+                    ${escapeHtml(awayT ? awayT.name : m.seedAway)}
+                  </span>
+                </div>
+                <span class="font-sport text-base font-bold text-slate-900 shrink-0">
+                  ${m.awayGoals !== null ? m.awayGoals : '-'}${m.awayPen !== null ? ` (${m.awayPen})` : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      };
+
+      return `
+        <div class="space-y-6">
+          <div>
+            <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase text-slate-900">Fase Final — Eliminación Directa</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Cada llave de Cuartos se habilita únicamente cuando finalizan todos los partidos de su zona.</p>
+          </div>
+
+          ${championTeam ? `
+            <div class="bg-gradient-to-r from-[#0F172A] via-[#0369A1] to-[#009EE3] text-white rounded-2xl p-6 shadow-xl border-2 border-sky-300 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                ${renderTeamCrest(championTeam, 64)}
+                <div>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-amber-400 text-slate-950">🏆 Campeón del Torneo</span>
+                  <h3 class="font-sport text-2xl sm:text-4xl font-bold uppercase mt-1">${escapeHtml(championTeam.name)}</h3>
+                  <p class="text-xs sm:text-sm text-sky-100">Torneo Interno de Socios • Club Atlético Temperley</p>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            <div class="space-y-3">
+              <h3 class="font-sport text-lg font-bold uppercase text-slate-700 px-1">Cuartos de Final</h3>
+              ${qfs.map(m => renderBracketCard(m)).join('')}
+            </div>
+
+            <div class="space-y-4">
+              <h3 class="font-sport text-lg font-bold uppercase text-slate-700 px-1">Semifinales</h3>
+              ${sfs.map(m => renderBracketCard(m)).join('')}
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="font-sport text-lg font-bold uppercase text-[#0077B6] px-1">Gran Final</h3>
+              ${fin ? renderBracketCard(fin, true) : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScorersView() {
+      const allScorers = computeTopScorers();
+      const searchLower = uiState.scorerSearch.trim().toLowerCase();
+
+      const filtered = allScorers.filter(s => {
+        if (uiState.scorerTeam !== 'ALL' && s.team.id !== uiState.scorerTeam) return false;
+        if (searchLower && !s.player.name.toLowerCase().includes(searchLower)) return false;
+        return true;
+      });
+
+      return `
+        <div class="space-y-5">
+          <div>
+            <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase text-slate-900">Tabla de Goleadores</h2>
+            <p class="text-xs sm:text-sm text-slate-500">Ranking actualizado en tiempo real con todos los tantos del campeonato.</p>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row gap-3">
+            <select
+              onchange="uiState.scorerTeam=this.value; renderApp();"
+              class="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700"
+            >
+              <option value="ALL" ${uiState.scorerTeam === 'ALL' ? 'selected' : ''}>Todos los equipos</option>
+              ${tournamentData.teams.map(t => `
+                <option value="${t.id}" ${uiState.scorerTeam === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>
+              `).join('')}
+            </select>
+
+            <input
+              type="text"
+              value="${escapeHtml(uiState.scorerSearch)}"
+              oninput="uiState.scorerSearch=this.value; renderApp();"
+              placeholder="Buscar socio por nombre..."
+              class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-[#009EE3] focus:outline-none"
+            />
+          </div>
+
+          ${filtered.length === 0
+            ? `<div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-500 text-sm">
+                Aún no se registraron goles con los filtros actuales.
+              </div>`
+            : `<div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr class="bg-[#0F172A] text-white text-[11px] font-extrabold uppercase">
+                        <th class="py-3 pl-4 pr-2 w-12 text-center">Pos</th>
+                        <th class="py-3 px-3">Jugador</th>
+                        <th class="py-3 px-3">Equipo</th>
+                        <th class="py-3 px-3 text-center">PJ</th>
+                        <th class="py-3 px-3 text-center">Prom.</th>
+                        <th class="py-3 pl-3 pr-4 text-center bg-[#009EE3]">Goles</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
+                      ${filtered.map((item, idx) => {
+                        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+                        return `
+                          <tr class="${idx < 3 ? 'bg-[#E0F5FE]/35' : 'hover:bg-slate-50'}">
+                            <td class="py-3 pl-4 pr-2 text-center font-extrabold text-slate-700">${medal}</td>
+                            <td class="py-3 px-3">
+                              <div class="flex items-center gap-3">
+                                ${renderPlayerAvatar(item.player, 36)}
+                                <span class="font-bold text-slate-900">${escapeHtml(item.player.name)}</span>
+                              </div>
+                            </td>
+                            <td class="py-3 px-3">
+                              <div class="flex items-center gap-2">
+                                ${renderTeamCrest(item.team, 24)}
+                                <span class="text-slate-600 font-medium">${escapeHtml(item.team.name)}</span>
+                              </div>
+                            </td>
+                            <td class="py-3 px-3 text-center text-slate-600">${item.pj}</td>
+                            <td class="py-3 px-3 text-center text-slate-500">${item.avg}</td>
+                            <td class="py-3 pl-3 pr-4 text-center font-sport text-lg font-bold text-[#0077B6]">${item.goals}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>`
+          }
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------
+    // 10. PANEL DE ADMINISTRACIÓN / PLANILLEROS
+    // -------------------------------------------------------------------
+    function renderAdminView() {
+      let subContentHtml = '';
+
+      if (uiState.adminSubTab === 'fixture') {
+        const groupTeams = tournamentData.teams.filter(t => t.group === uiState.newMatchGroup);
+        if (!groupTeams.some(t => t.id === uiState.newMatchHomeId)) {
+          uiState.newMatchHomeId = groupTeams[0]?.id || '';
+        }
+        if (!groupTeams.some(t => t.id === uiState.newMatchAwayId) || uiState.newMatchAwayId === uiState.newMatchHomeId) {
+          const alt = groupTeams.find(t => t.id !== uiState.newMatchHomeId);
+          uiState.newMatchAwayId = alt?.id || '';
+        }
+
+        const groupMatches = tournamentData.matches.filter(m => {
+          if (m.stage !== 'GROUP') return false;
+          if (uiState.adminFixtureFilterGroup !== 'ALL' && m.group !== uiState.adminFixtureFilterGroup) return false;
+          return true;
+        });
+
+        const knockoutMatches = tournamentData.matches.filter(m => m.stage !== 'GROUP');
+
+        subContentHtml = `
+          <div class="space-y-5">
+            <!-- Constructor Manual de Partidos de Grupo -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#0077B6]">Configuración Manual</span>
+                  <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Agregar Partido al Fixture</h3>
+                  <p class="text-xs text-slate-500">Elegí el grupo, los equipos enfrentados, el día, cancha y horario en intervalos de 5 minutos.</p>
+                </div>
+                ${tournamentData.matches.some(m => m.stage === 'GROUP') ? `
+                  <button type="button" onclick="clearAllGroupFixtures()" class="self-start px-3 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs">
+                    🗑️ Limpiar Fixture Grupos
+                  </button>
+                ` : ''}
+              </div>
+
+              <form onsubmit="addManualFixtureMatch(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end text-xs">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">1. Grupo</label>
+                  <select
+                    onchange="onNewMatchGroupChange(this.value)"
+                    class="w-full px-3 py-2.5 rounded-xl border-2 border-[#009EE3] bg-[#E0F5FE]/35 font-bold text-slate-900"
+                  >
+                    ${TOURNAMENT_GROUPS.map(g => {
+                      const count = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g).length;
+                      return `<option value="${g}" ${uiState.newMatchGroup === g ? 'selected' : ''}>Grupo ${g} (${count}/3)</option>`;
+                    }).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">2. Equipo Local</label>
+                  <select
+                    onchange="uiState.newMatchHomeId=this.value; renderApp();"
+                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                  >
+                    ${groupTeams.map(t => `
+                      <option value="${t.id}" ${uiState.newMatchHomeId === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">3. Equipo Visitante</label>
+                  <select
+                    onchange="uiState.newMatchAwayId=this.value; renderApp();"
+                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                  >
+                    ${groupTeams.map(t => `
+                      <option value="${t.id}" ${uiState.newMatchAwayId === t.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">4. Día y Horario (5 min)</label>
+                  <div class="flex gap-1.5">
+                    <select
+                      onchange="uiState.newMatchDay=this.value"
+                      class="w-1/2 px-2 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    >
+                      <option value="Sábado" ${uiState.newMatchDay === 'Sábado' ? 'selected' : ''}>Sábado</option>
+                      <option value="Domingo" ${uiState.newMatchDay === 'Domingo' ? 'selected' : ''}>Domingo</option>
+                    </select>
+                    <select
+                      onchange="uiState.newMatchTime=this.value"
+                      class="w-1/2 px-2 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    >
+                      ${getFiveMinuteTimeOptions(uiState.newMatchTime)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">5. Cancha</label>
+                  <input
+                    type="text"
+                    value="${escapeHtml(uiState.newMatchPitch)}"
+                    oninput="uiState.newMatchPitch=this.value"
+                    placeholder="Cancha 1"
+                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs sm:text-sm shadow-2xs transition-colors">
+                    + Agregar Partido
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Partidos de Fase de Grupos Configurados -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Partidos Programados — Fase de Grupos</h3>
+                  <p class="text-xs text-slate-500">Podés modificar horarios (en intervalos de 5 min), cambiar la cancha o quitar encuentros.</p>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" onclick="uiState.adminFixtureFilterGroup='ALL'; renderApp();" class="px-3 py-1.5 rounded-xl text-xs font-bold ${uiState.adminFixtureFilterGroup === 'ALL' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-700'}">
+                    Todos (${tournamentData.matches.filter(m => m.stage === 'GROUP').length}/15)
+                  </button>
+                  ${TOURNAMENT_GROUPS.map(g => {
+                    const cnt = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g).length;
+                    return `
+                      <button type="button" onclick="uiState.adminFixtureFilterGroup='${g}'; renderApp();" class="px-3 py-1.5 rounded-xl text-xs font-bold ${uiState.adminFixtureFilterGroup === g ? 'bg-[#009EE3] text-white' : 'bg-slate-100 text-slate-700'}">
+                        Grupo ${g} (${cnt}/3)
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              ${groupMatches.length === 0
+                ? `<div class="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-center space-y-1">
+                    <p class="font-bold text-sm text-slate-700">El fixture de grupos está en limpio</p>
+                    <p class="text-xs text-slate-500">Usá el formulario superior para cargar manualmente los 3 partidos de cada grupo (A, B, C, D y E).</p>
+                  </div>`
+                : `<div class="space-y-2.5">
+                    ${groupMatches.map(m => {
+                      const homeT = getTeamById(m.homeId);
+                      const awayT = getTeamById(m.awayId);
+                      return `
+                        <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <span class="px-2.5 py-1 rounded-lg bg-[#0F172A] text-white font-sport text-xs font-bold shrink-0">
+                              Grupo ${m.group}
+                            </span>
+                            <div class="flex items-center gap-2 min-w-0">
+                              ${renderTeamCrest(homeT, 26)}
+                              <span class="font-bold text-xs sm:text-sm text-slate-900 truncate">${escapeHtml(homeT?.name || 'Local')}</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-slate-400 px-1">VS</span>
+                            <div class="flex items-center gap-2 min-w-0">
+                              ${renderTeamCrest(awayT, 26)}
+                              <span class="font-bold text-xs sm:text-sm text-slate-900 truncate">${escapeHtml(awayT?.name || 'Visitante')}</span>
+                            </div>
+                          </div>
+
+                          <div class="flex flex-wrap items-center gap-2 text-xs shrink-0">
+                            <select
+                              onchange="updateMatchScheduleField('${m.id}', 'day', this.value)"
+                              class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-bold text-slate-700"
+                            >
+                              <option value="Sábado" ${m.day === 'Sábado' ? 'selected' : ''}>Sábado</option>
+                              <option value="Domingo" ${m.day === 'Domingo' ? 'selected' : ''}>Domingo</option>
+                            </select>
+
+                            <select
+                              onchange="updateMatchScheduleField('${m.id}', 'time', this.value)"
+                              class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-bold text-slate-700"
+                            >
+                              ${getFiveMinuteTimeOptions(m.time)}
+                            </select>
+
+                            <input
+                              type="text"
+                              value="${escapeHtml(m.pitch)}"
+                              onchange="updateMatchScheduleField('${m.id}', 'pitch', this.value)"
+                              class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white font-bold text-slate-700"
+                            />
+
+                            <button type="button" onclick="swapFixtureMatchSides('${m.id}')" title="Invertir Local / Visitante" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 font-bold text-slate-700">
+                              ⇄
+                            </button>
+
+                            <button type="button" onclick="deleteFixtureMatch('${m.id}')" title="Eliminar partido" class="px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 font-bold text-red-600">
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>`
+              }
+            </div>
+
+            <!-- Horarios y Canchas de Fase Final (Domingo) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+              <div>
+                <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Horarios y Canchas — Fase Final (Domingo)</h3>
+                <p class="text-xs text-slate-500">Los cruces se completan automáticamente cuando finalizan todos los partidos de cada grupo.</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                ${knockoutMatches.map(m => `
+                  <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                      <span class="font-extrabold text-[#0077B6] uppercase">${escapeHtml(m.label)}</span>
+                      <p class="text-slate-500">${escapeHtml(m.seedHome)} vs ${escapeHtml(m.seedAway)}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <select
+                        onchange="updateMatchScheduleField('${m.id}', 'time', this.value)"
+                        class="px-2 py-1.5 rounded-lg border border-slate-300 bg-white font-bold text-slate-700"
+                      >
+                        ${getFiveMinuteTimeOptions(m.time)}
+                      </select>
+                      <input
+                        type="text"
+                        value="${escapeHtml(m.pitch)}"
+                        onchange="updateMatchScheduleField('${m.id}', 'pitch', this.value)"
+                        class="w-28 px-2 py-1.5 rounded-lg border border-slate-300 bg-white font-bold text-slate-700"
+                      />
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (uiState.adminSubTab === 'resultados') {
+        const matchesFiltered = tournamentData.matches.filter(m => {
+          if (uiState.adminMatchFilter === 'ALL') return true;
+          if (uiState.adminMatchFilter === 'KNOCKOUT') return m.stage !== 'GROUP';
+          return m.status === uiState.adminMatchFilter;
+        });
+
+        subContentHtml = `
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-white p-3 rounded-2xl border border-slate-200">
+              ${[
+                { id: 'ALL', label: `Todos (${tournamentData.matches.length})` },
+                { id: 'LIVE', label: '🔴 En Juego' },
+                { id: 'SCHEDULED', label: '🕒 Programados' },
+                { id: 'FINISHED', label: '✅ Finalizados' },
+                { id: 'KNOCKOUT', label: '🏆 Fase Final' }
+              ].map(f => `
+                <button
+                  type="button"
+                  onclick="uiState.adminMatchFilter='${f.id}'; renderApp();"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold ${
+                    uiState.adminMatchFilter === f.id ? 'bg-[#009EE3] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }"
+                >
+                  ${f.label}
+                </button>
+              `).join('')}
+            </div>
+
+            ${matchesFiltered.length === 0
+              ? `<div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+                  No hay partidos para mostrar. Cargá primero los encuentros en <strong>📅 Armar Fixture</strong>.
+                </div>`
+              : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  ${matchesFiltered.map(m => {
+                    const homeT = getTeamById(m.homeId);
+                    const awayT = getTeamById(m.awayId);
+                    const stageLabel = m.stage === 'GROUP' ? `Grupo ${m.group}` : m.label;
+                    const isKnockoutDraw = m.stage !== 'GROUP' && m.homeGoals !== null && m.awayGoals !== null && m.homeGoals === m.awayGoals;
+
+                    return `
+                      <div class="bg-white rounded-2xl border ${m.status === 'LIVE' ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200'} p-4 shadow-2xs space-y-3">
+                        <div class="flex items-center justify-between gap-2 text-xs">
+                          <span class="font-extrabold text-[#0077B6] uppercase">${escapeHtml(stageLabel)} • ${escapeHtml(m.day)} ${escapeHtml(m.time)} • ${escapeHtml(m.pitch)}</span>
+                          <select
+                            onchange="setMatchStatus('${m.id}', this.value)"
+                            class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold bg-slate-50"
+                          >
+                            <option value="SCHEDULED" ${m.status === 'SCHEDULED' ? 'selected' : ''}>🕒 Programado</option>
+                            <option value="LIVE" ${m.status === 'LIVE' ? 'selected' : ''}>🔴 En Juego</option>
+                            <option value="FINISHED" ${m.status === 'FINISHED' ? 'selected' : ''}>✅ Finalizado</option>
+                          </select>
+                        </div>
+
+                        <div class="grid grid-cols-11 items-center gap-2">
+                          <div class="col-span-4 flex flex-col items-center text-center gap-1.5">
+                            ${renderTeamCrest(homeT, 34)}
+                            <span class="font-bold text-xs text-slate-900 line-clamp-1">${escapeHtml(homeT ? homeT.name : m.seedHome)}</span>
+                            <div class="flex items-center gap-1">
+                              <button type="button" onclick="openGoalModal('${m.id}', 'home')" ${!homeT ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg bg-[#009EE3] hover:bg-[#0077B6] disabled:opacity-40 text-white font-bold text-xs">
+                                + Gol
+                              </button>
+                              <button type="button" onclick="removeLastGoal('${m.id}', 'home')" ${(m.homeGoals || 0) <= 0 ? 'disabled' : ''} class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-700 font-bold text-xs">
+                                -1
+                              </button>
+                            </div>
+                          </div>
+
+                          <div class="col-span-3 text-center">
+                            <div class="py-2 px-2 rounded-xl bg-[#0F172A] text-white font-sport text-2xl font-bold">
+                              ${m.homeGoals !== null ? m.homeGoals : '-'} : ${m.awayGoals !== null ? m.awayGoals : '-'}
+                            </div>
+                          </div>
+
+                          <div class="col-span-4 flex flex-col items-center text-center gap-1.5">
+                            ${renderTeamCrest(awayT, 34)}
+                            <span class="font-bold text-xs text-slate-900 line-clamp-1">${escapeHtml(awayT ? awayT.name : m.seedAway)}</span>
+                            <div class="flex items-center gap-1">
+                              <button type="button" onclick="openGoalModal('${m.id}', 'away')" ${!awayT ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg bg-[#009EE3] hover:bg-[#0077B6] disabled:opacity-40 text-white font-bold text-xs">
+                                + Gol
+                              </button>
+                              <button type="button" onclick="removeLastGoal('${m.id}', 'away')" ${(m.awayGoals || 0) <= 0 ? 'disabled' : ''} class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-700 font-bold text-xs">
+                                -1
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        ${isKnockoutDraw ? `
+                          <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2 text-xs">
+                            <span class="font-bold text-amber-800">Definición por Penales:</span>
+                            <div class="flex items-center gap-2">
+                              <input type="number" min="0" value="${m.homePen ?? ''}" onchange="updateKnockoutPenalty('${m.id}', 'home', this.value)" placeholder="Loc" class="w-14 px-2 py-1 rounded-lg border border-amber-300 text-center font-bold bg-white" />
+                              <span>-</span>
+                              <input type="number" min="0" value="${m.awayPen ?? ''}" onchange="updateKnockoutPenalty('${m.id}', 'away', this.value)" placeholder="Vis" class="w-14 px-2 py-1 rounded-lg border border-amber-300 text-center font-bold bg-white" />
+                            </div>
+                          </div>
+                        ` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>`
+            }
+          </div>
+        `;
+      } else if (uiState.adminSubTab === 'equipos') {
+        const selectedTeam = getTeamById(uiState.adminSelectedTeamId) || tournamentData.teams[0];
+
+        subContentHtml = `
+          <div class="space-y-5">
+            <!-- Tarjeta: Escudo Principal del Header -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5">
+                <div class="w-14 h-14 rounded-2xl bg-[#0F172A] p-1.5 flex items-center justify-center shrink-0">
+                  ${tournamentData.customHeaderCrestUrl
+                    ? `<img src="${tournamentData.customHeaderCrestUrl}" alt="Header Crest" class="w-full h-full object-contain rounded-xl" />`
+                    : renderTemperleyCrestSVG('w-full h-full')
+                  }
+                </div>
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#0077B6]">Identidad Superior</span>
+                  <h3 class="font-sport text-lg font-bold uppercase text-slate-900">Escudo Principal del Header</h3>
+                  <p class="text-xs text-slate-500">Se muestra arriba a la izquierda en toda la plataforma.</p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs shadow-2xs">
+                  🖼️ Cambiar Escudo Header
+                  <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'headerCrest')" />
+                </label>
+                ${tournamentData.customHeaderCrestUrl ? `
+                  <button type="button" onclick="openImageCropModal({ targetType: 'headerCrest', title: 'Reajustar Escudo Header', rawImageSrc: tournamentData.customHeaderCrestUrl })" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                    ✂️ Reajustar
+                  </button>
+                  <button type="button" onclick="resetCustomHeaderCrest()" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs">
+                    Restablecer Oficial CAT
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Editor de Equipo Seleccionado -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                <div class="flex-1">
+                  <label class="block text-xs font-bold text-slate-500 mb-1">Seleccionar Equipo (15 Equipos • Grupos A–E):</label>
+                  <select
+                    onchange="uiState.adminSelectedTeamId=this.value; renderApp();"
+                    class="w-full sm:w-80 px-3.5 py-2.5 rounded-xl border-2 border-[#009EE3] font-bold text-sm text-slate-900 bg-white"
+                  >
+                    ${tournamentData.teams.map(t => `
+                      <option value="${t.id}" ${t.id === selectedTeam.id ? 'selected' : ''}>Grupo ${t.group} • ${escapeHtml(t.name)}</option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  ${renderTeamCrest(selectedTeam, 48)}
+                  <div class="flex flex-wrap gap-2">
+                    <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs">
+                      🛡️ Subir Escudo
+                      <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'teamCrest', '${selectedTeam.id}')" />
+                    </label>
+                    ${selectedTeam.customCrestUrl ? `
+                      <button type="button" onclick="openImageCropModal({ targetType: 'teamCrest', targetId: '${selectedTeam.id}', title: 'Reajustar Escudo • ' + getTeamById('${selectedTeam.id}').name, rawImageSrc: getTeamById('${selectedTeam.id}').customCrestUrl })" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                        ✂️ Reajustar
+                      </button>
+                      <button type="button" onclick="resetTeamCrest('${selectedTeam.id}')" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs">
+                        Quitar
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Nombre del Equipo:</label>
+                <div class="flex gap-2">
+                  <input
+                    id="edit-team-name-input"
+                    type="text"
+                    value="${escapeHtml(selectedTeam.name)}"
+                    class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-900"
+                  />
+                  <button type="button" onclick="updateTeamName('${selectedTeam.id}', document.getElementById('edit-team-name-input').value)" class="px-4 py-2 rounded-xl bg-[#009EE3] text-white font-bold text-xs">
+                    Guardar Nombre
+                  </button>
+                </div>
+              </div>
+
+              <!-- Creador y Personalización de Escudo Genérico -->
+              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="p-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      ${renderDefaultCrestSVG(selectedTeam, 52)}
+                    </div>
+                    <div>
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-[#0077B6]">Diseño Heráldico</span>
+                      <h4 class="font-sport text-lg font-bold uppercase text-slate-900">Creador de Escudo Genérico</h4>
+                      <p class="text-xs text-slate-500">Personalizá sigla, forma, trama y colores si no subís una imagen propia.</p>
+                    </div>
+                  </div>
+
+                  ${selectedTeam.customCrestUrl ? `
+                    <button type="button" onclick="resetTeamCrest('${selectedTeam.id}')" class="self-start sm:self-center px-3.5 py-2 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs shadow-2xs">
+                      Usar Este Escudo Genérico
+                    </button>
+                  ` : `
+                    <span class="self-start sm:self-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                      ✓ Escudo genérico activo
+                    </span>
+                  `}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Sigla (máx. 4)</label>
+                    <input
+                      type="text"
+                      maxlength="4"
+                      value="${escapeHtml(selectedTeam.code || '')}"
+                      onchange="updateGenericCrestProp('${selectedTeam.id}', 'code', this.value)"
+                      placeholder="Ej: CAT"
+                      class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-sport text-sm font-bold uppercase text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Forma</label>
+                    <select
+                      onchange="updateGenericCrestProp('${selectedTeam.id}', 'crestShape', this.value)"
+                      class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    >
+                      <option value="classic" ${(selectedTeam.crestShape || 'classic') === 'classic' ? 'selected' : ''}>Clásico</option>
+                      <option value="swiss" ${selectedTeam.crestShape === 'swiss' ? 'selected' : ''}>Suizo (Tipo CAT)</option>
+                      <option value="pointed" ${selectedTeam.crestShape === 'pointed' ? 'selected' : ''}>Punta / Diamante</option>
+                      <option value="modern" ${selectedTeam.crestShape === 'modern' ? 'selected' : ''}>Moderno</option>
+                      <option value="circle" ${selectedTeam.crestShape === 'circle' ? 'selected' : ''}>Circular</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Diseño / Trama</label>
+                    <select
+                      onchange="updateGenericCrestProp('${selectedTeam.id}', 'crestPattern', this.value)"
+                      class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    >
+                      <option value="diagonal" ${(selectedTeam.crestPattern || 'diagonal') === 'diagonal' ? 'selected' : ''}>Banda Diagonal</option>
+                      <option value="vertical" ${selectedTeam.crestPattern === 'vertical' ? 'selected' : ''}>Bastones Verticales</option>
+                      <option value="horizontal" ${selectedTeam.crestPattern === 'horizontal' ? 'selected' : ''}>Franja Horizontal</option>
+                      <option value="half" ${selectedTeam.crestPattern === 'half' ? 'selected' : ''}>Mitad y Mitad</option>
+                      <option value="solid" ${selectedTeam.crestPattern === 'solid' ? 'selected' : ''}>Liso</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Color Principal</label>
+                    <div class="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value="${escapeHtml(selectedTeam.primaryColor || '#009EE3')}"
+                        onchange="updateGenericCrestProp('${selectedTeam.id}', 'primaryColor', this.value)"
+                        class="w-9 h-9 rounded-lg border border-slate-300 bg-white cursor-pointer shrink-0"
+                      />
+                      <div class="flex flex-wrap gap-1">
+                        ${['#009EE3', '#0F172A', '#FFFFFF', '#DC2626', '#16A34A', '#EAB308'].map(hex => `
+                          <button
+                            type="button"
+                            onclick="updateGenericCrestProp('${selectedTeam.id}', 'primaryColor', '${hex}')"
+                            style="background-color:${hex};"
+                            title="${hex}"
+                            class="w-5 h-5 rounded-md border border-slate-300 shadow-2xs hover:scale-110 transition-transform"
+                          ></button>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Color Secundario</label>
+                    <div class="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value="${escapeHtml(selectedTeam.secondaryColor || '#FFFFFF')}"
+                        onchange="updateGenericCrestProp('${selectedTeam.id}', 'secondaryColor', this.value)"
+                        class="w-9 h-9 rounded-lg border border-slate-300 bg-white cursor-pointer shrink-0"
+                      />
+                      <div class="flex flex-wrap gap-1">
+                        ${['#FFFFFF', '#009EE3', '#0F172A', '#FACC15', '#EF4444', '#38BDF8'].map(hex => `
+                          <button
+                            type="button"
+                            onclick="updateGenericCrestProp('${selectedTeam.id}', 'secondaryColor', '${hex}')"
+                            style="background-color:${hex};"
+                            title="${hex}"
+                            class="w-5 h-5 rounded-md border border-slate-300 shadow-2xs hover:scale-110 transition-transform"
+                          ></button>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lista de Buena Fe (Sin números, con silueta o foto) -->
+              <div class="space-y-3">
+                <h4 class="font-sport text-lg font-bold uppercase text-slate-800">Lista de Buena Fe (${selectedTeam.players.length} Socios)</h4>
+
+                <form onsubmit="addPlayerToTeam(event, '${selectedTeam.id}')" class="flex flex-col sm:flex-row gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <input
+                    id="new-player-name-input"
+                    type="text"
+                    required
+                    placeholder="Nombre y apellido del socio..."
+                    class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium"
+                  />
+                  <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5">
+                    📷 ${uiState.pendingNewPlayerPhoto ? 'Foto Lista ✓' : 'Foto (Opcional)'}
+                    <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'newPlayerPhoto')" />
+                  </label>
+                  <button type="submit" class="px-4 py-2 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs">
+                    + Agregar Socio
+                  </button>
+                </form>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  ${selectedTeam.players.map(p => `
+                    <div class="p-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        ${renderPlayerAvatar(p, 38)}
+                        <span class="font-bold text-xs sm:text-sm text-slate-900 truncate">${escapeHtml(p.name)}</span>
+                      </div>
+
+                      <div class="flex items-center gap-1 shrink-0">
+                        <label title="Subir foto" class="cursor-pointer p-1.5 rounded-lg bg-slate-100 hover:bg-[#E0F5FE] text-slate-700 text-xs font-bold">
+                          📷
+                          <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'playerPhoto', '${p.id}')" />
+                        </label>
+                        ${p.photoUrl ? `
+                          <button type="button" title="Reencuadrar foto" onclick="openImageCropModal({ targetType: 'playerPhoto', targetId: '${p.id}', title: 'Encuadrar Foto • ${escapeHtml(p.name)}', rawImageSrc: '${p.photoUrl}', bgMode: '#ffffff', outputSize: 200 })" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+                            ✂️
+                          </button>
+                          <button type="button" title="Volver a silueta" onclick="clearPlayerPhoto('${selectedTeam.id}', '${p.id}')" class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-bold">
+                            👤
+                          </button>
+                        ` : ''}
+                        <button type="button" title="Quitar jugador" onclick="removePlayerFromTeam('${selectedTeam.id}', '${p.id}')" class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold">
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (uiState.adminSubTab === 'imagenes') {
+        const settings = getImageSettings();
+        const customTeams = tournamentData.teams.filter(t => t.customCrestUrl);
+        const customPlayers = [];
+        tournamentData.teams.forEach(t => {
+          t.players.forEach(p => {
+            if (p.photoUrl) customPlayers.push({ team: t, player: p });
+          });
+        });
+
+        subContentHtml = `
+          <div class="space-y-5">
+            <!-- Control de Escala Visual en Pantalla -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div>
+                  <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Escala Visual en Pantalla</h3>
+                  <p class="text-xs text-slate-500">Ajustá el tamaño con el que se ven los escudos y fotos en toda la web (28–180 px / 40%–260%).</p>
+                </div>
+                <button type="button" onclick="resetGlobalImageSettings()" class="self-start px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700">
+                  Restablecer Tamaños
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div class="flex justify-between font-bold text-slate-800">
+                    <span>Escudo Header</span>
+                    <span class="text-[#0077B6]">${settings.headerCrestSize} px</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="updateGlobalImageSetting('headerCrestSize', ${settings.headerCrestSize - 4})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">-</button>
+                    <input type="range" min="28" max="180" step="2" value="${settings.headerCrestSize}" oninput="updateGlobalImageSetting('headerCrestSize', this.value)" class="flex-1 accent-[#009EE3]" />
+                    <button type="button" onclick="updateGlobalImageSetting('headerCrestSize', ${settings.headerCrestSize + 4})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">+</button>
+                  </div>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div class="flex justify-between font-bold text-slate-800">
+                    <span>Escudos de Equipos</span>
+                    <span class="text-[#0077B6]">${settings.teamCrestScale}%</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="updateGlobalImageSetting('teamCrestScale', ${settings.teamCrestScale - 10})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">-</button>
+                    <input type="range" min="40" max="260" step="5" value="${settings.teamCrestScale}" oninput="updateGlobalImageSetting('teamCrestScale', this.value)" class="flex-1 accent-[#009EE3]" />
+                    <button type="button" onclick="updateGlobalImageSetting('teamCrestScale', ${settings.teamCrestScale + 10})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">+</button>
+                  </div>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div class="flex justify-between font-bold text-slate-800">
+                    <span>Fotos de Jugadores</span>
+                    <span class="text-[#0077B6]">${settings.playerPhotoScale}%</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" onclick="updateGlobalImageSetting('playerPhotoScale', ${settings.playerPhotoScale - 10})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">-</button>
+                    <input type="range" min="40" max="260" step="5" value="${settings.playerPhotoScale}" oninput="updateGlobalImageSetting('playerPhotoScale', this.value)" class="flex-1 accent-[#009EE3]" />
+                    <button type="button" onclick="updateGlobalImageSetting('playerPhotoScale', ${settings.playerPhotoScale + 10})" class="w-8 h-8 rounded-lg bg-white border border-slate-300 font-extrabold text-slate-700 hover:bg-slate-100">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reajuste Masivo en Lote -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+              <div>
+                <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Reajuste y Compresión en Lote</h3>
+                <p class="text-xs text-slate-500">Redimensioná automáticamente todas las imágenes subidas para optimizar la velocidad en celulares.</p>
+              </div>
+              <div class="flex flex-wrap items-end gap-3 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Resolución Máxima</label>
+                  <select id="batch-max-dim" class="px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold">
+                    <option value="128">128 × 128 px</option>
+                    <option value="160" selected>160 × 160 px (Recomendado)</option>
+                    <option value="256">256 × 256 px</option>
+                    <option value="384">384 × 384 px</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Compresión</label>
+                  <select id="batch-quality" class="px-3 py-2 rounded-xl border border-slate-300 bg-white font-bold">
+                    <option value="0.72">Alta compresión (72%)</option>
+                    <option value="0.82" selected>Equilibrada (82%)</option>
+                    <option value="0.92">Máxima nitidez (92%)</option>
+                  </select>
+                </div>
+                <button type="button" onclick="batchResizeAllImages()" class="px-4 py-2 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold">
+                  Reajustar Todas las Imágenes
+                </button>
+              </div>
+            </div>
+
+            <!-- Galería Rápida de Imágenes Subidas -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Imágenes Personalizadas Cargadas</h3>
+              ${(!tournamentData.customHeaderCrestUrl && customTeams.length === 0 && customPlayers.length === 0)
+                ? `<p class="text-xs text-slate-500">Todavía no subiste imágenes personalizadas. Podés cargarlas desde <strong>🛡️ Equipos, Escudos y Fotos</strong>.</p>`
+                : `<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                    ${tournamentData.customHeaderCrestUrl ? `
+                      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center gap-2 text-center">
+                        <img src="${tournamentData.customHeaderCrestUrl}" class="w-14 h-14 object-contain rounded-lg bg-[#0F172A] p-1" />
+                        <span class="text-[11px] font-bold text-slate-800 truncate w-full">Escudo Header</span>
+                        <button type="button" onclick="openImageCropModal({ targetType: 'headerCrest', title: 'Reajustar Escudo Header', rawImageSrc: tournamentData.customHeaderCrestUrl })" class="w-full py-1 rounded-lg bg-[#009EE3] text-white text-[11px] font-bold">
+                          ✂️ Reajustar
+                        </button>
+                      </div>
+                    ` : ''}
+                    ${customTeams.map(t => `
+                      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center gap-2 text-center">
+                        <img src="${t.customCrestUrl}" class="w-14 h-14 object-contain rounded-lg bg-white p-1 border border-slate-200" />
+                        <span class="text-[11px] font-bold text-slate-800 truncate w-full">${escapeHtml(t.name)}</span>
+                        <button type="button" onclick="openImageCropModal({ targetType: 'teamCrest', targetId: '${t.id}', title: 'Reajustar Escudo • ${escapeHtml(t.name)}', rawImageSrc: getTeamById('${t.id}').customCrestUrl })" class="w-full py-1 rounded-lg bg-[#009EE3] text-white text-[11px] font-bold">
+                          ✂️ Reajustar
+                        </button>
+                      </div>
+                    `).join('')}
+                    ${customPlayers.map(({ team, player }) => `
+                      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center gap-2 text-center">
+                        <img src="${player.photoUrl}" class="w-14 h-14 object-cover rounded-full border border-slate-300" />
+                        <span class="text-[11px] font-bold text-slate-800 truncate w-full">${escapeHtml(player.name)}</span>
+                        <button type="button" onclick="uiState.adminSelectedTeamId='${team.id}'; openImageCropModal({ targetType: 'playerPhoto', targetId: '${player.id}', title: 'Encuadrar Foto • ${escapeHtml(player.name)}', rawImageSrc: '${player.photoUrl}', bgMode: '#ffffff', outputSize: 200 })" class="w-full py-1 rounded-lg bg-[#009EE3] text-white text-[11px] font-bold">
+                          ✂️ Reajustar
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>`
+              }
+            </div>
+          </div>
+        `;
+      } else if (uiState.adminSubTab === 'controles') {
+        subContentHtml = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Simulación Rápida</h3>
+              <p class="text-xs text-slate-500">Completá automáticamente los 15 partidos de los 5 grupos con resultados y goleadores aleatorios para probar la tabla de mejores segundos y los cruces de cuartos.</p>
+              <button type="button" onclick="simulateGroupStage()" class="px-4 py-2.5 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs sm:text-sm">
+                ⚡ Simular Fase de Grupos
+              </button>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
+              <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Respaldo y Reinicio</h3>
+              <p class="text-xs text-slate-500">Exportá una copia completa del torneo (incluyendo resultados, escudos y fotos) o reiniciá todos los datos a cero.</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="exportTournamentJson()" class="px-3.5 py-2 rounded-xl bg-[#0F172A] text-white font-bold text-xs">
+                  ⬇️ Exportar JSON
+                </button>
+                <button type="button" onclick="document.getElementById('import-json-input').click()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs">
+                  ⬆️ Importar JSON
+                </button>
+                <button type="button" onclick="resetTournamentData()" class="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs">
+                  🗑️ Reiniciar Torneo
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="space-y-5">
+          <div class="bg-[#0F172A] text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-[#009EE3]">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#009EE3]">Modo Planillero Activo</span>
+              <h2 class="font-sport text-2xl font-bold uppercase">Panel de Administración del Torneo</h2>
+            </div>
+            <button type="button" onclick="logoutAdmin()" class="self-start sm:self-auto px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-400/40 text-red-200 text-xs font-bold">
+              🔒 Salir y Ocultar Admin
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            ${[
+              { id: 'fixture', label: '📅 Armar Fixture' },
+              { id: 'resultados', label: '⚡ Resultados' },
+              { id: 'equipos', label: '🛡️ Equipos, Escudos y Fotos' },
+              { id: 'imagenes', label: '📐 Tamaño y Ajuste de Imágenes' },
+              { id: 'controles', label: '⚙️ Simulación y Respaldo' }
+            ].map(st => `
+              <button
+                type="button"
+                onclick="uiState.adminSubTab = '${st.id}'; renderApp();"
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                  uiState.adminSubTab === st.id
+                    ? 'bg-[#0F172A] text-white shadow-2xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }"
+              >
+                ${st.label}
+              </button>
+            `).join('')}
+          </div>
+
+          ${subContentHtml}
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------
+    // 11. RENDER PRINCIPAL E INICIALIZACIÓN
+    // -------------------------------------------------------------------
+    function renderApp() {
+      syncKnockoutBracket();
+
+      const headerBtn = document.getElementById('header-crest-btn');
+      if (headerBtn) headerBtn.innerHTML = renderMainHeaderCrest();
+
+      const footerWrap = document.getElementById('footer-crest-wrap');
+      if (footerWrap) footerWrap.innerHTML = renderTemperleyCrestSVG('w-full h-full');
+
+      const hasLive = tournamentData.matches.some(m => m.status === 'LIVE');
+      const liveBadge = document.getElementById('live-header-badge');
+      if (liveBadge) {
+        if (hasLive) {
+          liveBadge.classList.remove('hidden');
+          liveBadge.classList.add('inline-flex');
+        } else {
+          liveBadge.classList.add('hidden');
+          liveBadge.classList.remove('inline-flex');
+        }
+      }
+
+      renderNavigation();
+
+      const main = document.getElementById('app-content');
+      if (!main) return;
+
+      if (uiState.activeTab === 'posiciones') {
+        main.innerHTML = renderStandingsView();
+      } else if (uiState.activeTab === 'fixture') {
+        main.innerHTML = renderFixtureView();
+      } else if (uiState.activeTab === 'fase-final') {
+        main.innerHTML = renderKnockoutView();
+      } else if (uiState.activeTab === 'goleadores') {
+        main.innerHTML = renderScorersView();
+      } else if (uiState.activeTab === 'admin' && uiState.adminUnlocked) {
+        main.innerHTML = renderAdminView();
+      } else {
+        uiState.activeTab = 'posiciones';
+        main.innerHTML = renderStandingsView();
+      }
+    }
+
+    window.onload = function () {
+      renderApp();
+      checkUrlAdminTrigger();
+    };
+  </script>
+</body>
+</html>
