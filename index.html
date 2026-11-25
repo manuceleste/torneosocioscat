@@ -82,11 +82,6 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-          <div id="cloud-sync-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-200 text-[11px] font-bold">
-            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span>Conectando...</span>
-          </div>
-
           <div id="live-header-badge" class="hidden shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-400/40 text-red-200 text-xs font-bold">
             <span class="w-2 h-2 rounded-full bg-red-400 live-dot"></span>
             <span>EN VIVO</span>
@@ -597,7 +592,6 @@
 
         if (!firebaseConfig) {
           uiState.cloudStatus = 'offline';
-          renderCloudStatusBadge();
           return;
         }
 
@@ -619,7 +613,6 @@
 
         if (!currentUser) {
           uiState.cloudStatus = 'error';
-          renderCloudStatusBadge();
           return;
         }
 
@@ -653,7 +646,6 @@
           (error) => {
             console.error('Error en suscripción de partidos:', error);
             uiState.cloudStatus = 'error';
-            renderCloudStatusBadge();
           }
         );
 
@@ -678,7 +670,6 @@
           (error) => {
             console.error('Error en suscripción de equipos:', error);
             uiState.cloudStatus = 'error';
-            renderCloudStatusBadge();
           }
         );
       } catch (err) {
@@ -687,23 +678,6 @@
         renderCloudStatusBadge();
       }
     }
-
-    function renderCloudStatusBadge() {
-      const badge = document.getElementById('cloud-sync-badge');
-      if (!badge) return;
-
-      if (uiState.cloudStatus === 'synced') {
-        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-[11px] font-bold';
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>En vivo para todos</span>`;
-      } else if (uiState.cloudStatus === 'connecting') {
-        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-200 text-[11px] font-bold';
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span>Conectando...</span>`;
-      } else {
-        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-700/70 border border-slate-600 text-slate-300 text-[11px] font-bold';
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span>Modo local</span>`;
-      }
-    }
-
     // -------------------------------------------------------------------
     // 3. UTILIDADES Y COMPONENTES VISUALES
     // -------------------------------------------------------------------
@@ -3569,7 +3543,6 @@
     // -------------------------------------------------------------------
     function renderApp() {
       syncKnockoutBracket();
-      renderCloudStatusBadge();
 
       const headerBtn = document.getElementById('header-crest-btn');
       if (headerBtn) headerBtn.innerHTML = renderMainHeaderCrest();
