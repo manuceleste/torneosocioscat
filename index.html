@@ -135,14 +135,13 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const ADMIN_PIN = '1912';
     const TOURNAMENT_GROUPS = ['A', 'B', 'C', 'D', 'E'];
 
     // =========================================================================
     // CONFIGURACIÓN DE BASE DE DATOS EN TIEMPO REAL (PARA VERCEL)
-    // Pegá aquí los datos que te da tu proyecto gratuito al crear la app web:
     // =========================================================================
     const MANUAL_FIREBASE_CONFIG = {
       apiKey: "AIzaSyDspTzckuToSPYhA8-i8Swtiug082kvu0M",
@@ -489,6 +488,7 @@
       adminSubTab: 'fixture',
       adminMatchFilter: 'ALL',
       adminSelectedTeamId: 't1',
+      showNewTeamForm: false,
       pendingNewPlayerPhoto: null,
       goalModalMatchId: null,
       goalModalSide: null,
@@ -646,7 +646,7 @@
           }
         );
 
-        // Escucha en vivo de los 15 equipos (nombres, escudos y fotos de socios)
+        // Escucha en vivo de los equipos (nombres, escudos y fotos de socios)
         onSnapshot(
           getTeamsCollectionRef(),
           (querySnap) => {
@@ -672,9 +672,9 @@
       } catch (err) {
         console.error('Error inicializando sincronización:', err);
         uiState.cloudStatus = 'error';
-        renderCloudStatusBadge();
       }
     }
+
     // -------------------------------------------------------------------
     // 3. UTILIDADES Y COMPONENTES VISUALES
     // -------------------------------------------------------------------
@@ -912,10 +912,17 @@
       return list;
     }
 
-    // Verifica si un grupo completó todos sus partidos (en un grupo de 3 equipos son 3 partidos finalizados)
+    function getExpectedGroupMatchesCount(groupLetter) {
+      const n = tournamentData.teams.filter(t => t.group === groupLetter).length;
+      if (n < 2) return 1;
+      return (n * (n - 1)) / 2;
+    }
+
+    // Verifica si un grupo completó todos sus partidos
     function isGroupCompleted(groupLetter) {
       const groupMatches = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === groupLetter);
-      return groupMatches.length >= 3 && groupMatches.every(m => m.status === 'FINISHED');
+      const expected = getExpectedGroupMatchesCount(groupLetter);
+      return groupMatches.length >= expected && groupMatches.every(m => m.status === 'FINISHED');
     }
 
     function isAllGroupsCompleted() {
@@ -1905,6 +1912,90 @@
       renderApp();
     }
 
+    function createNewTeam(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('new-team-name-input');
+      const groupSelect = document.getElementById('new-team-group-select');
+      const primaryInput = document.getElementById('new-team-primary-input');
+      const secondaryInput = document.getElementById('new-team-secondary-input');
+
+      const name = nameInput?.value.trim();
+      const group = groupSelect?.value || 'A';
+      if (!name) {
+        showToast('Ingresá un nombre para el equipo', 'error');
+        return;
+      }
+
+      const words = name.split(/\s+/).filter(Boolean);
+      const autoCode = words.length >= 2
+        ? words.slice(0, 3).map(w => w[0]).join('').toUpperCase()
+        : name.slice(0, 3).toUpperCase();
+
+      const newTeam = {
+        id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+        group,
+        name,
+        code: autoCode || 'CAT',
+        primaryColor: primaryInput?.value || '#009EE3',
+        secondaryColor: secondaryInput?.value || '#FFFFFF',
+        crestShape: 'classic',
+        crestPattern: 'diagonal',
+        customCrestUrl: null,
+        players: []
+      };
+
+      tournamentData.teams.push(newTeam);
+      uiState.adminSelectedTeamId = newTeam.id;
+      uiState.showNewTeamForm = false;
+
+      syncKnockoutBracket();
+      saveTournamentData({ saveMain: true, teamId: newTeam.id });
+      showToast(`Equipo "${name}" creado en Grupo ${group}`, 'success');
+      renderApp();
+    }
+
+    function updateTeamGroup(teamId, newGroup) {
+      const team = getTeamById(teamId);
+      if (!team || !TOURNAMENT_GROUPS.includes(newGroup) || team.group === newGroup) return;
+      team.group = newGroup;
+      syncKnockoutBracket();
+      saveTournamentData({ saveMain: true, teamId: team.id });
+      showToast(`${team.name} movido al Grupo ${newGroup}`, 'success');
+      renderApp();
+    }
+
+    function deleteTeam(teamId) {
+      const team = getTeamById(teamId);
+      if (!team) return;
+
+      openConfirmModal(
+        'Eliminar Equipo',
+        `¿Seguro que querés eliminar a "${team.name}"? También se quitarán sus partidos programados en la fase de grupos.`,
+        async () => {
+          tournamentData.teams = tournamentData.teams.filter(t => t.id !== teamId);
+          tournamentData.matches = tournamentData.matches.filter(
+            m => !(m.stage === 'GROUP' && (m.homeId === teamId || m.awayId === teamId))
+          );
+
+          if (uiState.adminSelectedTeamId === teamId) {
+            uiState.adminSelectedTeamId = tournamentData.teams[0]?.id || '';
+          }
+
+          syncKnockoutBracket();
+          await saveTournamentData({ saveMain: true, saveAllTeams: true });
+          if (currentUser && db) {
+            try {
+              await deleteDoc(getTeamDocRef(teamId));
+            } catch (err) {
+              console.error('Error al borrar equipo en la nube:', err);
+            }
+          }
+          showToast(`Equipo "${team.name}" eliminado`, 'info');
+          renderApp();
+        }
+      );
+    }
+
     function addPlayerToTeam(e, teamId) {
       e.preventDefault();
       const team = getTeamById(teamId);
@@ -1933,19 +2024,20 @@
     }
 
     function simulateGroupStage() {
-      // Si el fixture de grupos está vacío, generamos los 15 partidos base (3 por grupo) primero
+      // Si el fixture de grupos está vacío, generamos los partidos base primero
       const existingGroupMatches = tournamentData.matches.filter(m => m.stage === 'GROUP');
       if (existingGroupMatches.length === 0) {
         const baseTimes = ['09:00', '09:45', '10:30', '11:15', '12:00', '12:45', '13:30', '14:15', '15:00', '15:45', '16:30', '17:15', '18:00', '18:45', '19:30'];
         let tIdx = 0;
         TOURNAMENT_GROUPS.forEach(g => {
           const gTeams = tournamentData.teams.filter(t => t.group === g);
-          if (gTeams.length >= 3) {
-            const pairs = [
-              [gTeams[0].id, gTeams[1].id, 1],
-              [gTeams[0].id, gTeams[2].id, 2],
-              [gTeams[1].id, gTeams[2].id, 3]
-            ];
+          if (gTeams.length >= 2) {
+            const pairs = [];
+            for (let i = 0; i < gTeams.length; i++) {
+              for (let j = i + 1; j < gTeams.length; j++) {
+                pairs.push([gTeams[i].id, gTeams[j].id, pairs.length + 1]);
+              }
+            }
             pairs.forEach(([hId, aId, rnd]) => {
               tournamentData.matches.unshift({
                 id: 'm_sim_' + g + '_' + rnd + '_' + Math.random().toString(36).slice(2, 6),
@@ -2250,11 +2342,12 @@
             </div>
           </div>
 
-          <!-- 5 Grupos de 3 equipos -->
+          <!-- 5 Grupos -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             ${groups.map(g => {
               const rows = computeGroupStandings(g);
               const completed = isGroupCompleted(g);
+              const expectedCount = getExpectedGroupMatchesCount(g);
               const groupMatchesCount = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g && m.status === 'FINISHED').length;
               return `
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
@@ -2264,7 +2357,7 @@
                       <h3 class="font-sport text-lg font-bold uppercase tracking-wide">Grupo ${g}</h3>
                     </div>
                     <span class="text-[11px] font-semibold ${completed ? 'text-emerald-300' : 'text-sky-300'}">
-                      ${completed ? '✅ Grupo completado' : `${groupMatchesCount}/3 partidos jugados`}
+                      ${completed ? '✅ Grupo completado' : `${groupMatchesCount}/${expectedCount} partidos jugados`}
                     </span>
                   </div>
 
@@ -2791,7 +2884,8 @@
                   >
                     ${TOURNAMENT_GROUPS.map(g => {
                       const count = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g).length;
-                      return `<option value="${g}" ${uiState.newMatchGroup === g ? 'selected' : ''}>Grupo ${g} (${count}/3)</option>`;
+                      const expected = getExpectedGroupMatchesCount(g);
+                      return `<option value="${g}" ${uiState.newMatchGroup === g ? 'selected' : ''}>Grupo ${g} (${count}/${expected})</option>`;
                     }).join('')}
                   </select>
                 </div>
@@ -2867,13 +2961,14 @@
                 </div>
                 <div class="flex flex-wrap gap-1.5">
                   <button type="button" onclick="uiState.adminFixtureFilterGroup='ALL'; renderApp();" class="px-3 py-1.5 rounded-xl text-xs font-bold ${uiState.adminFixtureFilterGroup === 'ALL' ? 'bg-[#0F172A] text-white' : 'bg-slate-100 text-slate-700'}">
-                    Todos (${tournamentData.matches.filter(m => m.stage === 'GROUP').length}/15)
+                    Todos (${tournamentData.matches.filter(m => m.stage === 'GROUP').length})
                   </button>
                   ${TOURNAMENT_GROUPS.map(g => {
                     const cnt = tournamentData.matches.filter(m => m.stage === 'GROUP' && m.group === g).length;
+                    const expected = getExpectedGroupMatchesCount(g);
                     return `
                       <button type="button" onclick="uiState.adminFixtureFilterGroup='${g}'; renderApp();" class="px-3 py-1.5 rounded-xl text-xs font-bold ${uiState.adminFixtureFilterGroup === g ? 'bg-[#009EE3] text-white' : 'bg-slate-100 text-slate-700'}">
-                        Grupo ${g} (${cnt}/3)
+                        Grupo ${g} (${cnt}/${expected})
                       </button>
                     `;
                   }).join('')}
@@ -2883,7 +2978,7 @@
               ${groupMatches.length === 0
                 ? `<div class="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-center space-y-1">
                     <p class="font-bold text-sm text-slate-700">El fixture de grupos está en limpio</p>
-                    <p class="text-xs text-slate-500">Usá el formulario superior para cargar manualmente los 3 partidos de cada grupo (A, B, C, D y E).</p>
+                    <p class="text-xs text-slate-500">Usá el formulario superior para cargar manualmente los partidos de cada grupo (A, B, C, D y E).</p>
                   </div>`
                 : `<div class="space-y-2.5">
                     ${groupMatches.map(m => {
@@ -3083,10 +3178,71 @@
           </div>
         `;
       } else if (uiState.adminSubTab === 'equipos') {
-        const selectedTeam = getTeamById(uiState.adminSelectedTeamId) || tournamentData.teams[0];
+        const selectedTeam = getTeamById(uiState.adminSelectedTeamId) || tournamentData.teams[0] || null;
 
         subContentHtml = `
           <div class="space-y-5">
+            <!-- Tarjeta: Crear Nuevo Equipo -->
+            <div class="bg-white rounded-2xl border-2 border-[#009EE3]/40 p-4 sm:p-5 shadow-2xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-[#0077B6]">Alta de Equipos (${tournamentData.teams.length} inscriptos)</span>
+                  <h3 class="font-sport text-lg sm:text-xl font-bold uppercase text-slate-900">Crear Equipo Nuevo</h3>
+                  <p class="text-xs text-slate-500">Agregá un equipo nuevo a cualquiera de las zonas y luego cargale su escudo y jugadores.</p>
+                </div>
+                <button
+                  type="button"
+                  onclick="uiState.showNewTeamForm = !uiState.showNewTeamForm; renderApp();"
+                  class="self-start sm:self-center px-4 py-2.5 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs shadow-2xs"
+                >
+                  ${uiState.showNewTeamForm ? '✕ Cerrar Formulario' : '+ Crear Nuevo Equipo'}
+                </button>
+              </div>
+
+              ${uiState.showNewTeamForm ? `
+                <form onsubmit="createNewTeam(event)" class="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end text-xs">
+                  <div class="lg:col-span-2">
+                    <label class="block font-bold text-slate-700 mb-1">Nombre del Equipo *</label>
+                    <input
+                      id="new-team-name-input"
+                      type="text"
+                      required
+                      placeholder="Ej: Los Gasoleros de Turdera"
+                      class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Zona / Grupo</label>
+                    <select
+                      id="new-team-group-select"
+                      class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900"
+                    >
+                      ${TOURNAMENT_GROUPS.map(g => {
+                        const cnt = tournamentData.teams.filter(t => t.group === g).length;
+                        return `<option value="${g}">Grupo ${g} (${cnt} equipos)</option>`;
+                      }).join('')}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Colores del Escudo</label>
+                    <div class="flex items-center gap-2">
+                      <input id="new-team-primary-input" type="color" value="#009EE3" title="Color Principal" class="w-10 h-9 rounded-lg border border-slate-300 bg-white cursor-pointer" />
+                      <input id="new-team-secondary-input" type="color" value="#FFFFFF" title="Color Secundario" class="w-10 h-9 rounded-lg border border-slate-300 bg-white cursor-pointer" />
+                      <span class="text-[11px] text-slate-500">Princ. / Sec.</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs">
+                      ✓ Guardar Equipo
+                    </button>
+                  </div>
+                </form>
+              ` : ''}
+            </div>
+
             <!-- Tarjeta: Escudo Principal del Header -->
             <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-center gap-3.5">
@@ -3120,36 +3276,56 @@
             </div>
 
             <!-- Editor de Equipo Seleccionado -->
+            ${!selectedTeam ? `
+              <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+                No hay equipos cargados todavía. Tocá <strong>+ Crear Nuevo Equipo</strong> arriba para agregar el primero.
+              </div>
+            ` : `
             <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-5">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-                <div class="flex-1">
-                  <label class="block text-xs font-bold text-slate-500 mb-1">Seleccionar Equipo (15 Equipos • Grupos A–E):</label>
-                  <select
-                    onchange="uiState.adminSelectedTeamId=this.value; renderApp();"
-                    class="w-full sm:w-80 px-3.5 py-2.5 rounded-xl border-2 border-[#009EE3] font-bold text-sm text-slate-900 bg-white"
-                  >
-                    ${tournamentData.teams.map(t => `
-                      <option value="${t.id}" ${t.id === selectedTeam.id ? 'selected' : ''}>Grupo ${t.group} • ${escapeHtml(t.name)}</option>
-                    `).join('')}
-                  </select>
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                <div class="flex flex-col sm:flex-row sm:items-end gap-2.5 flex-1">
+                  <div class="flex-1 sm:max-w-xs">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Seleccionar Equipo (${tournamentData.teams.length} Equipos • Grupos A–E):</label>
+                    <select
+                      onchange="uiState.adminSelectedTeamId=this.value; renderApp();"
+                      class="w-full px-3.5 py-2.5 rounded-xl border-2 border-[#009EE3] font-bold text-sm text-slate-900 bg-white"
+                    >
+                      ${tournamentData.teams.map(t => `
+                        <option value="${t.id}" ${t.id === selectedTeam.id ? 'selected' : ''}>Grupo ${t.group} • ${escapeHtml(t.name)}</option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Zona asignada:</label>
+                    <select
+                      onchange="updateTeamGroup('${selectedTeam.id}', this.value)"
+                      class="px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 font-bold text-sm text-slate-900"
+                    >
+                      ${TOURNAMENT_GROUPS.map(g => `
+                        <option value="${g}" ${selectedTeam.group === g ? 'selected' : ''}>Grupo ${g}</option>
+                      `).join('')}
+                    </select>
+                  </div>
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2.5">
                   ${renderTeamCrest(selectedTeam, 48)}
-                  <div class="flex flex-wrap gap-2">
-                    <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs">
-                      🛡️ Subir Escudo
-                      <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'teamCrest', '${selectedTeam.id}')" />
-                    </label>
-                    ${selectedTeam.customCrestUrl ? `
-                      <button type="button" onclick="openImageCropModal({ targetType: 'teamCrest', targetId: '${selectedTeam.id}', title: 'Reajustar Escudo • ' + getTeamById('${selectedTeam.id}').name, rawImageSrc: getTeamById('${selectedTeam.id}').customCrestUrl })" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
-                        ✂️ Reajustar
-                      </button>
-                      <button type="button" onclick="resetTeamCrest('${selectedTeam.id}')" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs">
-                        Quitar
-                      </button>
-                    ` : ''}
-                  </div>
+                  <label class="cursor-pointer px-3.5 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-xs">
+                    🛡️ Subir Escudo
+                    <input type="file" accept="image/*" class="hidden" onchange="startImageUpload(event, 'teamCrest', '${selectedTeam.id}')" />
+                  </label>
+                  ${selectedTeam.customCrestUrl ? `
+                    <button type="button" onclick="openImageCropModal({ targetType: 'teamCrest', targetId: '${selectedTeam.id}', title: 'Reajustar Escudo • ' + getTeamById('${selectedTeam.id}').name, rawImageSrc: getTeamById('${selectedTeam.id}').customCrestUrl })" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">
+                      ✂️ Reajustar
+                    </button>
+                    <button type="button" onclick="resetTeamCrest('${selectedTeam.id}')" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-xs">
+                      Quitar
+                    </button>
+                  ` : ''}
+                  <button type="button" onclick="deleteTeam('${selectedTeam.id}')" class="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold text-xs">
+                    🗑️ Eliminar Equipo
+                  </button>
                 </div>
               </div>
 
@@ -3333,6 +3509,7 @@
                 </div>
               </div>
             </div>
+            `}
           </div>
         `;
       } else if (uiState.adminSubTab === 'imagenes') {
@@ -3471,7 +3648,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-3">
               <h3 class="font-sport text-xl font-bold uppercase text-slate-900">Simulación Rápida</h3>
-              <p class="text-xs text-slate-500">Completá automáticamente los 15 partidos de los 5 grupos con resultados y goleadores aleatorios para probar la tabla de mejores segundos y los cruces de cuartos.</p>
+              <p class="text-xs text-slate-500">Completá automáticamente los partidos de los 5 grupos con resultados y goleadores aleatorios para probar la tabla de mejores segundos y los cruces de cuartos.</p>
               <button type="button" onclick="simulateGroupStage()" class="px-4 py-2.5 rounded-xl bg-[#009EE3] hover:bg-[#0077B6] text-white font-bold text-xs sm:text-sm">
                 ⚡ Simular Fase de Grupos
               </button>
@@ -3611,6 +3788,9 @@
       removeLastGoal,
       updateKnockoutPenalty,
       updateTeamName,
+      createNewTeam,
+      updateTeamGroup,
+      deleteTeam,
       addPlayerToTeam,
       removePlayerFromTeam,
       simulateGroupStage,
